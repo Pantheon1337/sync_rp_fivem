@@ -64,8 +64,9 @@ function NeedsNearMinimap({ hunger, thirst, talking }) {
   return (
     <div className="hud-needs">
       <NeedRing pct={hunger} color="var(--sync-hunger)" label="Голод">
+        {/* Burger — pairs with thirst droplet */}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-          <path d="M4 3h2v8a3 3 0 0 0 3 3v7H7v-7a3 3 0 0 0-3-3V3Zm14.5 0c-2.5 0-4.5 4-4.5 8v10h2v-6h2v6h2V11c0-4-2-8-4.5-8Z" />
+          <path d="M4.5 11h15a1.5 1.5 0 0 0 0-3H4.5a1.5 1.5 0 0 0 0 3Zm-.3 2.2c-.4.5-.2 1.3.4 1.6l1.1.5c.7.3 1.1 1 1.1 1.8V18a1 1 0 0 0 1 1h9.4a1 1 0 0 0 1-1v-.9c0-.8.4-1.5 1.1-1.8l1.1-.5c.6-.3.8-1.1.4-1.6H4.2ZM6.2 7.2C7 5.3 9.2 4 12 4s5 1.3 5.8 3.2H6.2Z" />
         </svg>
       </NeedRing>
       <NeedRing pct={thirst} color="var(--sync-thirst)" label="Жажда">
