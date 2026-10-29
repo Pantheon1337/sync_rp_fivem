@@ -29,6 +29,10 @@ ensure sync_core
 ensure sync_characters
 ensure sync_spawn
 ensure sync_nui
+ensure sync_chat
+
+# Optional: disable default cfx chat UI if present
+# ensure chat
 
 # sv_licenseKey "CHANGEME"
 

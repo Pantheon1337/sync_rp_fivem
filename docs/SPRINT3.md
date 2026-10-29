@@ -11,9 +11,10 @@
 | `sync_nui` | ui_page + NUI bridge, RU, dark glass + blue |
 | Character UI | list / create / select / delete |
 | Auth UX | license → account → регистрация/вход персонажа (без email/пароля) |
+| Appearance | плиточный редактор (лицо/волосы/одежда/props) + SyncRP scrollbar |
+| Chat | `sync_chat` — glass UI по макету, каналы, /me /do /try, настройки |
 | Position | autosave + flush в `characters.position_*` на disconnect |
-| Chat commands | остаются как fallback (`/chars`, `/charsui`) |
-| Appearance editor | **нет** (позже); дефолт-модели — story peds (видимые) |
+| Chat commands | fallback персонажей: `/chars`, `/charsui` |
 
 ## Поток игрока
 
@@ -49,13 +50,17 @@ cd nui && npm.cmd ci && npm.cmd run build && cd ..
 xcopy /E /I /Y resources\sync_nui        F:\SyncRP2.0\sync\resources\sync_nui
 xcopy /E /I /Y resources\sync_characters F:\SyncRP2.0\sync\resources\sync_characters
 xcopy /E /I /Y resources\sync_spawn      F:\SyncRP2.0\sync\resources\sync_spawn
+xcopy /E /I /Y resources\sync_chat       F:\SyncRP2.0\sync\resources\sync_chat
 ```
 
-В `server.cfg` после `sync_spawn`:
+В `server.cfg` после `sync_nui`:
 
 ```cfg
 ensure sync_nui
+ensure sync_chat
 ```
+
+Чат: клавиша **T**. Если мешает стандартный `chat` из cfx — закомментируйте `ensure chat`.
 
 Полный рестарт FXServer.
 

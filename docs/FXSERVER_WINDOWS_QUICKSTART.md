@@ -217,10 +217,11 @@ cd nui && npm.cmd ci && npm.cmd run build && cd ..
 xcopy /E /I /Y resources\sync_nui        F:\SyncRP2.0\sync\resources\sync_nui
 xcopy /E /I /Y resources\sync_characters F:\SyncRP2.0\sync\resources\sync_characters
 xcopy /E /I /Y resources\sync_spawn      F:\SyncRP2.0\sync\resources\sync_spawn
+xcopy /E /I /Y resources\sync_chat       F:\SyncRP2.0\sync\resources\sync_chat
 ```
 
-В `server.cfg` после `sync_spawn`: `ensure sync_nui`.  
-В игре: первый заход → регистрация персонажа в NUI → БД; повторный → вход → позиция из БД.
+В `server.cfg`: `ensure sync_nui` и `ensure sync_chat`.  
+В игре: регистрация/внешность в NUI; чат на **T** (glass UI). Если конфликтует — закомментируйте `ensure chat`.
 
 ---
 

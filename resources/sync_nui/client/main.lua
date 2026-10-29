@@ -179,7 +179,41 @@ end)
 
 RegisterNUICallback('previewAppearance', function(data, cb)
   SyncNuiPreviewAppearance(data and data.appearance)
+  -- Refresh texture limits for current drawable when previewing
   cb({ ok = true })
+end)
+
+RegisterNUICallback('getAppearanceLimits', function(_, cb)
+  local ped = PlayerPedId()
+  local components = {}
+  local textures = {}
+  for i = 0, 11 do
+    local drawables = GetNumberOfPedDrawableVariations(ped, i)
+    if not drawables or drawables < 1 then
+      drawables = 1
+    end
+    components[tostring(i)] = drawables
+    local current = GetPedDrawableVariation(ped, i)
+    local tex = GetNumberOfPedTextureVariations(ped, i, current)
+    textures[tostring(i)] = (tex and tex > 0) and tex or 1
+  end
+  local props = {}
+  for _, id in ipairs({ 0, 1, 2, 6, 7 }) do
+    local n = GetNumberOfPedPropDrawableVariations(ped, id)
+    props[tostring(id)] = (n and n > 0) and n or 1
+  end
+  cb({
+    ok = true,
+    limits = {
+      components = components,
+      textures = textures,
+      props = props,
+      overlays = { ['1'] = 29, ['2'] = 34 },
+      hairColors = 64,
+      eyeColors = 32,
+      headBlend = 46,
+    },
+  })
 end)
 
 RegisterNUICallback('saveAppearance', function(data, cb)

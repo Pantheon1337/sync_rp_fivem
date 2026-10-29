@@ -70,4 +70,9 @@ test('appearance editor opens from NUI message', async ({ page }) => {
   await expect(page.getByText('Внешность')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Сохранить и войти' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Волосы' })).toBeVisible();
+  await expect(page.getByText(/плитками/i)).toBeVisible();
+  await page.getByRole('button', { name: 'Волосы' }).click();
+  await expect(page.getByText('Причёска')).toBeVisible();
+  // Tile grid (not range slider)
+  await expect(page.locator('input[type="range"]')).toHaveCount(0);
 });

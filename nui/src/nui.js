@@ -102,6 +102,23 @@ function mockNui(event, data) {
   if (event === 'shellReady') {
     return { ok: true };
   }
+  if (event === 'getAppearanceLimits') {
+    return {
+      ok: true,
+      limits: {
+        components: {
+          '0': 46, '1': 50, '2': 40, '3': 80, '4': 80, '5': 40,
+          '6': 50, '7': 40, '8': 80, '9': 20, '10': 40, '11': 120,
+        },
+        textures: { '4': 12, '6': 12, '11': 12 },
+        props: { '0': 40, '1': 20, '2': 15, '6': 15, '7': 10 },
+        overlays: { '1': 29, '2': 34 },
+        hairColors: 64,
+        eyeColors: 32,
+        headBlend: 46,
+      },
+    };
+  }
   return { ok: false, error: 'mock-unknown' };
 }
 
