@@ -1,11 +1,14 @@
 -- SyncRP migration 001 — accounts, identifiers, sessions
--- Status: STAGE 0 PLACEHOLDER (design only). Apply in Stage 1 via sync_db.
--- Owner tables: sync_identity (accounts, account_identifiers), sync_sessions (sessions)
+-- Stage 1 — APPLY THIS FILE (no longer a placeholder)
+-- Owners: sync_identity (accounts, account_identifiers), sync_sessions (sessions)
 -- See docs/DATABASE.md
 
--- BEGIN STAGE 1 IMPLEMENTATION (do not treat as applied)
-/*
-CREATE TABLE accounts (
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  id VARCHAR(64) NOT NULL PRIMARY KEY,
+  applied_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS accounts (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   uuid CHAR(36) NOT NULL,
   status ENUM('active', 'suspended', 'banned') NOT NULL DEFAULT 'active',
@@ -16,7 +19,7 @@ CREATE TABLE accounts (
   UNIQUE KEY uq_accounts_uuid (uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE account_identifiers (
+CREATE TABLE IF NOT EXISTS account_identifiers (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   account_id BIGINT UNSIGNED NOT NULL,
   type VARCHAR(32) NOT NULL,
@@ -28,7 +31,7 @@ CREATE TABLE account_identifiers (
     FOREIGN KEY (account_id) REFERENCES accounts (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE sessions (
+CREATE TABLE IF NOT EXISTS sessions (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   account_id BIGINT UNSIGNED NOT NULL,
   character_id BIGINT UNSIGNED NULL,
@@ -42,5 +45,3 @@ CREATE TABLE sessions (
   CONSTRAINT fk_sessions_account
     FOREIGN KEY (account_id) REFERENCES accounts (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-*/
--- END PLACEHOLDER

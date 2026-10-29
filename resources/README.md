@@ -1,25 +1,31 @@
 # FiveM resources (SyncRP)
 
-Stage 0: **skeleton only**. Runtime SyncCore resources are implemented in Stage 1+.
+## Stage 1 (реализовано)
 
-Planned tree:
+| Resource        | Роль                                  |
+| --------------- | ------------------------------------- |
+| `sync_db`       | MariaDB pool, `query` / `transaction` |
+| `sync_identity` | accounts + identifiers                |
+| `sync_sessions` | sessions open/close                   |
+| `sync_core`     | connect/drop lifecycle, `getContext`  |
 
-```
-resources/
-  sync_core/          # Stage 1
-  sync_db/            # Stage 1
-  sync_identity/      # Stage 1
-  sync_sessions/      # Stage 1
-  sync_characters/    # Stage 2
-  sync_spawn/         # Stage 2
-  sync_nui/           # Stage 3
-  sync_economy/       # Stage 4
-  sync_inventory/     # Stage 5
-  sync_vehicles/      # Stage 6
-  sync_garages/       # Stage 6–7
-  sync_jobs/          # Stage 8
-  sync_admin/         # Stage 9
+**Ensure order:** `sync_db` → `sync_identity` → `sync_sessions` → `sync_core`.
+
+Перед первым стартом на FX-машине:
+
+```bash
+# из корня репо
+npm ci && npm run migrate   # нужен SYNC_DB_DSN
+cd resources/sync_db && npm ci && cd ../..
 ```
 
-Contracts: `docs/MODULE_CONTRACTS.md`.  
-Do not add QBCore/ESX/Qbox as dependencies.
+Скопируйте или симлинкуйте эти папки в `server-data/resources/`.
+
+Контракты: `docs/MODULE_CONTRACTS.md`.  
+FX checklist: `docs/FXSERVER_TEST_RUNBOOK.md`.
+
+## Далее
+
+`sync_characters` (Stage 2), `sync_nui` (3), `sync_economy` (4), …
+
+Не добавлять QBCore/ESX/Qbox.

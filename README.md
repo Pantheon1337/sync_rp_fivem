@@ -4,7 +4,8 @@
 
 SyncRP строится на **собственном SyncCore** — модульной архитектуре без QBCore / ESX / Qbox в качестве фундамента. Игровая логика выполняется на FXServer; внешние API не используются для каждой игровой механики.
 
-> **Текущий статус:** Stage 0 (планирование и архитектура). Реализация SyncCore runtime — Stage 1, только после подтверждения PO.
+> **Текущий статус:** Stage 0 **подтверждён PO**. В разработке **Stage 1** (SyncCore foundation).  
+> **Тест на FX-машине:** [docs/FXSERVER_TEST_RUNBOOK.md](docs/FXSERVER_TEST_RUNBOOK.md) — ветка `cursor/stage-1-synccore-foundation-5b89`.
 
 ## Стек
 
@@ -35,16 +36,17 @@ sync_rp_fivem/
 
 ## Артефакты Stage 0 → последующие этапы
 
-| Документ                                        | Зачем                                       | Когда используется      |
-| ----------------------------------------------- | ------------------------------------------- | ----------------------- |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md)         | SyncCore, модули, lifecycle, events/exports | Stage 1+ реализация     |
-| [DATABASE.md](docs/DATABASE.md)                 | Схема MariaDB, Stage 0 vs future            | Stage 1 миграции        |
-| [MODULE_CONTRACTS.md](docs/MODULE_CONTRACTS.md) | Контракты ресурсов                          | Любая разработка модуля |
-| [SECURITY.md](docs/SECURITY.md)                 | Trust boundaries, anti-dupe                 | Все этапы               |
-| [ROADMAP.md](docs/ROADMAP.md)                   | Этапы 0–15, зависимости, DoD                | Планирование            |
-| [SPRINT1.md](docs/SPRINT1.md)                   | Детальный план Sprint 1 + тест-кейсы        | Старт Stage 1           |
-| [TESTING.md](docs/TESTING.md)                   | Стратегия тестов, честность про FXServer    | CI и ревью              |
-| [UI_DESIGN_SYSTEM.md](docs/UI_DESIGN_SYSTEM.md) | Палитра SyncRP, NUI-правила                 | Stage 3+ NUI            |
+| Документ                                                  | Зачем                                       | Когда используется           |
+| --------------------------------------------------------- | ------------------------------------------- | ---------------------------- |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)                   | SyncCore, модули, lifecycle, events/exports | Stage 1+ реализация          |
+| [DATABASE.md](docs/DATABASE.md)                           | Схема MariaDB, Stage 0 vs future            | Stage 1 миграции             |
+| [MODULE_CONTRACTS.md](docs/MODULE_CONTRACTS.md)           | Контракты ресурсов                          | Любая разработка модуля      |
+| [SECURITY.md](docs/SECURITY.md)                           | Trust boundaries, anti-dupe                 | Все этапы                    |
+| [ROADMAP.md](docs/ROADMAP.md)                             | Этапы 0–15, зависимости, DoD                | Планирование                 |
+| [SPRINT1.md](docs/SPRINT1.md)                             | Детальный план Sprint 1 + тест-кейсы        | Старт Stage 1                |
+| [TESTING.md](docs/TESTING.md)                             | Стратегия тестов, честность про FXServer    | CI и ревью                   |
+| [FXSERVER_TEST_RUNBOOK.md](docs/FXSERVER_TEST_RUNBOOK.md) | **Для PO:** git pull → FXServer → чеклист   | Каждая проверка на FX-машине |
+| [UI_DESIGN_SYSTEM.md](docs/UI_DESIGN_SYSTEM.md)           | Палитра SyncRP, NUI-правила                 | Stage 3+ NUI                 |
 
 ## Быстрый старт (Stage 0 / подготовка к Stage 1)
 

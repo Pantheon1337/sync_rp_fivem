@@ -1,6 +1,6 @@
 # SyncRP Architecture — SyncCore
 
-Статус: **Stage 0 (design-ready)**. Runtime-код SyncCore появляется в Stage 1.
+Статус: **Stage 1 in progress** — runtime `sync_db` / `sync_identity` / `sync_sessions` / `sync_core` в `resources/`. Design baseline: Stage 0 (PO approved).
 
 ## Цели
 

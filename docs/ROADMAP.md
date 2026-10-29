@@ -33,7 +33,7 @@ PO: Pantheon Ai. Следующий этап не стартует без под
 - [x] README, AGENTS, ARCHITECTURE, DATABASE, MODULE_CONTRACTS, SECURITY, ROADMAP, TESTING, UI_DESIGN_SYSTEM, SPRINT1
 - [x] `.cursor/rules/` для SyncCore
 - [x] Skeleton folders + minimal CI/docker
-- [ ] PO подтвердил архитектуру → можно Stage 1
+- [x] PO подтвердил архитектуру → Stage 1
 
 **Не входит:** runtime SyncCore, gameplay.
 

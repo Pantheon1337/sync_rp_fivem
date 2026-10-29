@@ -52,13 +52,17 @@ Workflow stub: `.github/workflows/ci.yml`.
 
 ## Workflow: pull → FX test (машина PO)
 
+Пошаговая инструкция и чеклисты для PO: **[FXSERVER_TEST_RUNBOOK.md](./FXSERVER_TEST_RUNBOOK.md)**.
+
+Кратко:
+
 1. Смержить / забрать ветку: `git fetch && git checkout <branch> && git pull`.
 2. Подтянуть зависимости tooling при необходимости: `npm ci` (lint/unit локально опционально).
 3. Поднять MariaDB (`docker compose -f docker/docker-compose.yml up -d` или свой инстанс).
 4. Скопировать `server.cfg.example` → рабочий `server.cfg`, прописать DSN/license **вне git**.
 5. Убедиться FXServer build ≥ 12913 (Node 22) и OneSync.
 6. `ensure` порядок ресурсов (Sprint 1+: `sync_db` → identity → sessions → core).
-7. Пройти manual checklist ниже; краткий результат — в комментарий к PR или Issue.
+7. Пройти checklist в runbook; краткий результат — в комментарий к PR или Issue.
 
 ## Manual checklist (FX-машина)
 

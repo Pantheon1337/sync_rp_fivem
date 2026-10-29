@@ -1,9 +1,9 @@
 {
   "name": "sync_rp_fivem",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "SyncRP FiveM — Stage 0 tooling (SyncCore runtime arrives in Stage 1)",
+  "description": "SyncRP FiveM — SyncCore Stage 1 foundation",
   "engines": {
     "node": ">=20"
   },
@@ -12,7 +12,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "migrate": "node scripts/migrate.cjs"
+  },
+  "dependencies": {
+    "mysql2": "3.24.6"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

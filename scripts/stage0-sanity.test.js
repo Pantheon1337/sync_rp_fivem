@@ -1,30 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 /**
- * Stage 0 sanity: architecture artifacts exist.
- * Not a FiveM integration test — FXServer is not required here.
+ * Artifact sanity. Not a FiveM integration test.
  */
-describe('Stage 0 artifacts', () => {
+describe('repo artifacts', () => {
   const root = resolve(import.meta.dirname, '..');
 
   const required = [
     'README.md',
     'AGENTS.md',
     'docs/ARCHITECTURE.md',
-    'docs/DATABASE.md',
-    'docs/MODULE_CONTRACTS.md',
-    'docs/SECURITY.md',
-    'docs/ROADMAP.md',
-    'docs/TESTING.md',
-    'docs/UI_DESIGN_SYSTEM.md',
+    'docs/FXSERVER_TEST_RUNBOOK.md',
     'docs/SPRINT1.md',
-    'docker/docker-compose.yml',
-    '.cursor/rules/synccore-architecture.mdc',
+    'resources/sync_db/fxmanifest.lua',
+    'resources/sync_core/fxmanifest.lua',
+    'resources/sync_identity/fxmanifest.lua',
+    'resources/sync_sessions/fxmanifest.lua',
+    'database/migrations/001_accounts_sessions.sql',
   ];
 
   it.each(required)('has %s', (rel) => {
+    expect(existsSync(resolve(root, rel))).toBe(true);
     const body = readFileSync(resolve(root, rel), 'utf8');
     expect(body.length).toBeGreaterThan(20);
   });

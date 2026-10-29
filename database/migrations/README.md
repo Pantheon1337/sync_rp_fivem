@@ -1,12 +1,15 @@
 # Database migrations
 
-Ordered SQL files. Stage 0 files are **commented placeholders** — they must not be applied as-is until the owning stage uncomments/finalizes DDL.
+Apply on host (FX-машина / CI):
 
-| File                        | Stage |
-| --------------------------- | ----- |
-| `001_accounts_sessions.sql` | 1     |
-| `002_characters.sql`        | 2     |
-| `003_economy_ledger.sql`    | 4     |
-| `004_vehicles_plates.sql`   | 6–7   |
+```bash
+export SYNC_DB_DSN='mysql://syncrp:PASSWORD@127.0.0.1:3306/syncrp'
+npm run migrate
+```
 
-Runner arrives with `sync_db` in Stage 1.
+| File                        | Stage | Status                  |
+| --------------------------- | ----- | ----------------------- |
+| `001_accounts_sessions.sql` | 1     | **active**              |
+| `002_characters.sql`        | 2     | placeholder (commented) |
+| `003_economy_ledger.sql`    | 4     | placeholder             |
+| `004_vehicles_plates.sql`   | 6–7   | placeholder             |

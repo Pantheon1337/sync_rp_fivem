@@ -31,16 +31,19 @@
 
 ## `sync_db` (Stage 1)
 
-**Владеет:** connection pool, transaction helper, migration runner API.  
+**Владеет:** connection pool, declarative transactions, healthcheck.  
 **Не владеет:** доменной схемой (не знает «что такое character»).
 
-| Exports               |                          |
-| --------------------- | ------------------------ |
-| `query(sql, params)`  | Prepared statements only |
-| `withTransaction(fn)` | BEGIN/COMMIT/ROLLBACK    |
-| `healthcheck()`       |                          |
+| Exports              |                                                                                                    |
+| -------------------- | -------------------------------------------------------------------------------------------------- |
+| `query(sql, params)` | Prepared statements only; INSERT → `{ insertId, affectedRows }`                                    |
+| `transaction(steps)` | `[{ sql, params }]` в одной InnoDB txn; `'$insertId:0'` в params (без JS-callback между ресурсами) |
+| `healthcheck()`      |                                                                                                    |
+| `isReady()`          |                                                                                                    |
 
-**Данные:** нет своих таблиц. Секреты DSN — env.
+Host CLI: `SYNC_DB_DSN=… npm run migrate` (`scripts/migrate.cjs`).
+
+**Данные:** служебная `schema_migrations`. Секреты DSN — env/convar.
 
 **Net:** нет.
 
