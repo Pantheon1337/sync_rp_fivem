@@ -48,6 +48,7 @@ export function CharacterSelect() {
               </div>
               <div className="font-mono text-xs text-sync-subtle">
                 #{c.id} · слот {c.slot} · {c.gender} · {c.dateOfBirth}
+                {c.needsAppearance ? ' · нужна внешность' : ''}
                 {c.position ? ' · позиция в БД' : ''}
               </div>
             </div>

@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { nuiFetch } from './nui';
+import { defaultAppearance, mergeAppearance } from './appearanceDefaults';
 
 export const useSyncStore = create((set, get) => ({
   visible: false,
-  view: 'list', // list | create
+  view: 'list', // list | create | appearance
   characters: [],
   maxSlots: 3,
   loading: false,
@@ -12,6 +13,8 @@ export const useSyncStore = create((set, get) => ({
   isNewAccount: false,
   mustSelect: false,
   forceCreate: false,
+  appearanceCharacter: null,
+  appearance: null,
 
   openShell({ isNewAccount = false, mustSelect = false, forceCreate = false } = {}) {
     set({
@@ -22,6 +25,24 @@ export const useSyncStore = create((set, get) => ({
       forceCreate,
       view: forceCreate || isNewAccount ? 'create' : 'list',
     });
+  },
+
+  openAppearance(character, appearance) {
+    const base = defaultAppearance(character?.gender);
+    set({
+      visible: true,
+      mustSelect: true,
+      view: 'appearance',
+      appearanceCharacter: character,
+      appearance: mergeAppearance(base, appearance || {}),
+      error: null,
+      forceCreate: false,
+      isNewAccount: false,
+    });
+  },
+
+  setAppearance(appearance) {
+    set({ appearance });
   },
 
   setVisible(visible) {
@@ -46,6 +67,14 @@ export const useSyncStore = create((set, get) => ({
     const characters = res.characters || [];
     const empty = characters.length === 0;
     const prev = get();
+    if (prev.view === 'appearance') {
+      set({
+        loading: false,
+        characters,
+        maxSlots: res.maxSlots || 3,
+      });
+      return;
+    }
     const isNewAccount = !!(res.isNewAccount || empty || prev.isNewAccount);
     const forceCreate = empty && (prev.forceCreate || isNewAccount || prev.mustSelect);
     let view = prev.view;
@@ -66,8 +95,6 @@ export const useSyncStore = create((set, get) => ({
 
   async createCharacter(payload) {
     set({ loading: true, error: null });
-    const wasEmpty = get().characters.length === 0;
-    const mustSelect = get().mustSelect;
     const res = await nuiFetch('createCharacter', payload);
     if (!res?.ok) {
       set({ loading: false, error: res?.error || 'Ошибка создания' });
@@ -75,27 +102,61 @@ export const useSyncStore = create((set, get) => ({
     }
     const character = res.character;
     await get().refreshList();
-    set({
-      loading: false,
-      view: 'list',
-      selectedId: character?.id || null,
-      forceCreate: false,
-      isNewAccount: false,
-    });
-    if ((wasEmpty || mustSelect) && character?.id) {
-      return get().selectCharacter(character.id);
+    set({ loading: false, selectedId: character?.id || null, forceCreate: false, isNewAccount: false });
+    if (character?.id) {
+      get().openAppearance(character, character.appearance);
+      return true;
     }
+    set({ view: 'list' });
     return true;
   },
 
   async selectCharacter(id) {
     set({ loading: true, error: null, selectedId: id });
     const res = await nuiFetch('selectCharacter', { id });
+    if (res?.needsAppearance && res.character) {
+      set({ loading: false });
+      get().openAppearance(res.character, res.character.appearance);
+      return false;
+    }
     if (!res?.ok) {
       set({ loading: false, error: res?.error || 'Ошибка выбора' });
       return false;
     }
-    set({ loading: false, visible: false, mustSelect: false });
+    set({
+      loading: false,
+      visible: false,
+      mustSelect: false,
+      view: 'list',
+      appearanceCharacter: null,
+      appearance: null,
+    });
+    return true;
+  },
+
+  async saveAppearance() {
+    const { appearanceCharacter, appearance } = get();
+    if (!appearanceCharacter?.id || !appearance) {
+      set({ error: 'Нет данных внешности' });
+      return false;
+    }
+    set({ loading: true, error: null });
+    const res = await nuiFetch('saveAppearance', {
+      characterId: appearanceCharacter.id,
+      appearance,
+    });
+    if (!res?.ok) {
+      set({ loading: false, error: res?.error || 'Ошибка сохранения внешности' });
+      return false;
+    }
+    set({
+      loading: false,
+      visible: false,
+      mustSelect: false,
+      view: 'list',
+      appearanceCharacter: null,
+      appearance: null,
+    });
     return true;
   },
 

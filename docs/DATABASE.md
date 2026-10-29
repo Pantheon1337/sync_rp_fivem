@@ -78,7 +78,8 @@ UNIQUE (`type`, `value`). INDEX (`account_id`).
 | `cash`                                     | BIGINT / DECIMAL      | Temporary until economy ledger owns balances — **решение Stage 4** |
 | `bank`                                     | BIGINT / DECIMAL      | То же                                                              |
 | `position_x/y/z/h`                         | FLOAT NULL            | Last position                                                      |
-| `model`                                    | VARCHAR(64) NULL      |                                                                    |
+| `model`                                    | VARCHAR(64) NULL      | freemode model hash name                                           |
+| `appearance_json`                          | LONGTEXT NULL         | freemode appearance (components/props/hair/headblend) — mig `005`  |
 | `created_at` / `updated_at` / `deleted_at` | DATETIME(3)           |                                                                    |
 
 UNIQUE (`account_id`, `slot`).

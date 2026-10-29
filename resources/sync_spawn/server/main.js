@@ -33,10 +33,16 @@ async function spawnCharacter(source, characterId) {
     throw new Error('sync_spawn: персонаж не найден');
   }
   const coords = pickCoords(character);
-  const model = character.model || spawns.default.model || 'mp_m_freemode_01';
+  const appearance = character.appearance || null;
+  const model =
+    (appearance && appearance.model) ||
+    character.model ||
+    spawns.default.model ||
+    'mp_m_freemode_01';
   emitNet('sync:spawn:do', source, {
     characterId: character.id,
     model,
+    appearance,
     x: coords.x,
     y: coords.y,
     z: coords.z,

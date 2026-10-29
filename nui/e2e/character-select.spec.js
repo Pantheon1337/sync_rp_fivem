@@ -45,6 +45,29 @@ test('registration mode forces create for new account', async ({ page }) => {
   });
   await expect(page.getByText('Регистрация персонажа')).toBeVisible();
   await expect(page.getByText('Создание персонажа')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Создать и войти' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Далее: внешность' })).toBeVisible();
   await expect(page.getByText(/чат \(T\) недоступен/i)).toBeVisible();
+});
+
+test('appearance editor opens from NUI message', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    window.postMessage(
+      {
+        action: 'openAppearance',
+        character: {
+          id: 9,
+          firstName: 'Анна',
+          lastName: 'Смирнова',
+          gender: 'female',
+        },
+        appearance: null,
+      },
+      '*',
+    );
+  });
+  await expect(page.getByText('Редактор персонажа')).toBeVisible();
+  await expect(page.getByText('Внешность')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Сохранить и войти' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Волосы' })).toBeVisible();
 });

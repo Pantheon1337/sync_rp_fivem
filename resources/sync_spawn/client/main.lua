@@ -23,11 +23,11 @@ RegisterNetEvent('sync:spawn:do', function(payload)
     return
   end
 
-  local model = payload.model or 'a_m_y_hipster_01'
+  local model = payload.model or 'mp_m_freemode_01'
   local hash = joaat(model)
   if not IsModelInCdimage(hash) or not IsModelValid(hash) then
-    print(('[sync_spawn] invalid model %s, fallback hipster'):format(model))
-    model = 'a_m_y_hipster_01'
+    print(('[sync_spawn] invalid model %s, fallback freemode'):format(model))
+    model = 'mp_m_freemode_01'
     hash = joaat(model)
   end
 
@@ -49,6 +49,11 @@ RegisterNetEvent('sync:spawn:do', function(payload)
   local ped = PlayerPedId()
   SetPedDefaultComponentVariation(ped)
   ClearAllPedProps(ped)
+
+  if type(payload.appearance) == 'table' then
+    SyncApplyAppearance(ped, payload.appearance)
+  end
+
   SetEntityVisible(ped, true, false)
   ResetEntityAlpha(ped)
   SetEntityCollision(ped, true, true)
@@ -83,7 +88,6 @@ RegisterNetEvent('sync:spawn:do', function(payload)
   print(('[sync_spawn] done model=%s pos=%.1f,%.1f,%.1f'):format(model, x, y, z))
 end)
 
--- Autosave every 30s while in world
 CreateThread(function()
   while true do
     Wait(30000)

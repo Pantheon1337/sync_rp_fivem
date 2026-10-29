@@ -32,7 +32,7 @@ export function CharacterCreate() {
       </h2>
       <p className="mt-1 text-sm text-sync-muted">
         {registration
-          ? 'Имя и фамилия — 2–16 букв. После создания вы сразу войдёте в город.'
+          ? 'Имя и фамилия — 2–16 букв. Дальше — редактор внешности, затем вход в город.'
           : 'Имя и фамилия — 2–16 букв. Возраст 18–90.'}
       </p>
 
@@ -85,7 +85,7 @@ export function CharacterCreate() {
 
       <div className="mt-6 flex flex-wrap gap-3">
         <button type="submit" className="sync-btn sync-btn-primary" disabled={loading}>
-          {loading ? 'Сохранение…' : registration ? 'Создать и войти' : 'Создать'}
+          {loading ? 'Сохранение…' : registration ? 'Далее: внешность' : 'Создать'}
         </button>
         {canGoBack && (
           <button

@@ -81,12 +81,13 @@ Host CLI: `SYNC_DB_DSN=… npm run migrate` (`scripts/migrate.cjs`).
 
 **Владеет:** `characters` (и appearance blob, когда появится).
 
-| Exports | `listByAccount`, `create`, `get`, `softDelete`, `select`, `savePosition` |
-| Net | `sync:characters:list`, `sync:characters:create`, `sync:characters:select`, `sync:characters:delete`, `sync:characters:savePosition` |
+| Exports | `listByAccount`, `create`, `get`, `softDelete`, `select`, `savePosition`, `saveAppearance` |
+| Net | `list/create/select/delete/savePosition/saveAppearance` (+ `reqId` для NUI) |
 | Events | `sync:characters:selected`, `sync:characters:created` |
 
-Валидация имён/слотов на сервере. Select → `sync_core.setCharacter` + sessions update.  
-Позиция: клиент `sync_spawn` репортит coords → cache → flush в БД (периодически + на `sync:core:playerDropped`).
+Валидация имён/слотов на сервере. Select без `appearance_json` → `needsAppearance` (редактор).  
+Save appearance → normalize freemode JSON → select + spawn.  
+Позиция: autosave + flush на `sync:core:playerDropped`.
 
 ---
 

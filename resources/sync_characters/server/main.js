@@ -93,11 +93,24 @@ async function savePosition(characterId, pos) {
   return repo.savePosition(characterId, pos);
 }
 
-async function selectCharacter(source, characterId) {
+async function saveAppearance(accountId, characterId, appearance) {
+  return repo.saveAppearance(accountId, characterId, appearance);
+}
+
+/**
+ * @param {boolean} [allowWithoutAppearance]
+ */
+async function selectCharacter(source, characterId, allowWithoutAppearance = false) {
   const ctx = requireCtx(source);
   const ch = await repo.get(characterId);
   if (!ch || ch.accountId !== ctx.accountId) {
     throw new Error('sync_characters: персонаж не принадлежит аккаунту');
+  }
+  if (ch.needsAppearance && !allowWithoutAppearance) {
+    const err = new Error('sync_characters: сначала настройте внешность');
+    err.code = 'NEEDS_APPEARANCE';
+    err.character = ch;
+    throw err;
   }
   exports.sync_core.setCharacter(source, ch.id);
   if (exports.sync_sessions.setSessionCharacter) {
@@ -148,6 +161,9 @@ exports('get', (characterId) => getCharacter(characterId));
 exports('softDelete', (accountId, characterId) => softDelete(accountId, characterId));
 exports('select', (source, characterId) => selectCharacter(source, characterId));
 exports('savePosition', (characterId, pos) => savePosition(characterId, pos));
+exports('saveAppearance', (accountId, characterId, appearance) =>
+  saveAppearance(accountId, characterId, appearance),
+);
 
 function withReq(payload, reqId) {
   if (reqId == null || reqId === '') return payload;
@@ -211,8 +227,46 @@ onNet('sync:characters:select', async (characterId, reqId) => {
       withReq({ ok: true, character: ch }, reqId),
     );
   } catch (err) {
+    if (err && err.code === 'NEEDS_APPEARANCE') {
+      emitNet(
+        'sync:characters:selectResult',
+        src,
+        withReq(
+          {
+            ok: false,
+            needsAppearance: true,
+            character: err.character,
+            error: err.message,
+          },
+          reqId,
+        ),
+      );
+      return;
+    }
     emitNet(
       'sync:characters:selectResult',
+      src,
+      withReq({ ok: false, error: err && err.message ? err.message : 'error' }, reqId),
+    );
+  }
+});
+
+onNet('sync:characters:saveAppearance', async (payload, reqId) => {
+  const src = global.source;
+  try {
+    const ctx = requireCtx(src);
+    const characterId = Number(payload && payload.characterId);
+    const appearance = payload && payload.appearance;
+    const ch = await saveAppearance(ctx.accountId, characterId, appearance);
+    const selected = await selectCharacter(src, ch.id, true);
+    emitNet(
+      'sync:characters:saveAppearanceResult',
+      src,
+      withReq({ ok: true, character: selected }, reqId),
+    );
+  } catch (err) {
+    emitNet(
+      'sync:characters:saveAppearanceResult',
       src,
       withReq({ ok: false, error: err && err.message ? err.message : 'error' }, reqId),
     );

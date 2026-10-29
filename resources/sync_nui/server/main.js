@@ -1,16 +1,15 @@
 'use strict';
 
-/** @type {Map<number, ReturnType<typeof setTimeout>[]>} */
-const pendingOpen = new Map();
-/** Sources that already acknowledged NUI open */
+/** @type {Map<number, ReturnType<typeof setInterval>>} */
+const nudgeTimers = new Map();
 const opened = new Set();
 
-function clearPending(source) {
+function clearNudge(source) {
   const src = Number(source);
-  const timers = pendingOpen.get(src);
-  if (timers) {
-    for (const t of timers) clearTimeout(t);
-    pendingOpen.delete(src);
+  const t = nudgeTimers.get(src);
+  if (t) {
+    clearInterval(t);
+    nudgeTimers.delete(src);
   }
 }
 
@@ -39,57 +38,39 @@ function emitOpen(source, meta) {
   );
 }
 
-/**
- * One immediate open + one delayed retry only if client never acked.
- */
-function scheduleCharacterSelect(source, payload) {
+function startNudge(source, meta) {
   const src = Number(source);
-  if (!Number.isFinite(src)) return;
-  clearPending(src);
+  clearNudge(src);
   opened.delete(src);
-  const meta = openMeta(payload);
-  const timers = [];
+  emitOpen(src, meta);
 
-  timers.push(
-    setTimeout(() => {
-      if (!needsCharacterSelect(src) || opened.has(src)) {
-        clearPending(src);
-        return;
-      }
-      emitOpen(src, meta);
-    }, 0),
-  );
-
-  timers.push(
-    setTimeout(() => {
-      if (!needsCharacterSelect(src) || opened.has(src)) {
-        clearPending(src);
-        return;
-      }
-      emitOpen(src, meta);
-    }, 3000),
-  );
-
-  pendingOpen.set(src, timers);
+  let ticks = 0;
+  const timer = setInterval(() => {
+    ticks += 1;
+    if (!needsCharacterSelect(src) || opened.has(src) || ticks > 45) {
+      clearNudge(src);
+      return;
+    }
+    emitOpen(src, meta);
+  }, 2000);
+  nudgeTimers.set(src, timer);
 }
 
 on('sync:core:playerRegistered', (payload) => {
   const source = payload && payload.source;
   if (source == null) return;
-  scheduleCharacterSelect(source, payload);
+  startNudge(source, openMeta(payload));
 });
 
 onNet('sync:nui:ackOpen', () => {
   const src = Number(global.source);
   opened.add(src);
-  clearPending(src);
+  clearNudge(src);
 });
 
-/** Client finished loading sync_nui — open gate if still no character. */
 onNet('sync:nui:clientReady', async () => {
   const src = Number(global.source);
   if (!needsCharacterSelect(src)) return;
-  if (opened.has(src)) return;
 
   let empty = false;
   try {
@@ -102,24 +83,29 @@ onNet('sync:nui:clientReady', async () => {
     empty = false;
   }
 
-  clearPending(src);
-  emitOpen(src, {
+  const meta = {
     isNewAccount: empty,
     mustSelect: true,
     forceCreate: empty,
-  });
+  };
+
+  if (!opened.has(src)) {
+    startNudge(src, meta);
+  } else {
+    emitOpen(src, meta);
+  }
 });
 
 on('sync:characters:selected', (payload) => {
   if (payload && payload.source != null) {
-    clearPending(payload.source);
+    clearNudge(payload.source);
     opened.delete(Number(payload.source));
   }
 });
 
 on('sync:core:playerDropped', (payload) => {
   if (payload && payload.source != null) {
-    clearPending(payload.source);
+    clearNudge(payload.source);
     opened.delete(Number(payload.source));
   }
 });
@@ -129,7 +115,7 @@ exports('showCharacterSelect', (source, meta) => {
 });
 
 exports('hide', (source) => {
-  clearPending(source);
+  clearNudge(source);
   opened.delete(Number(source));
   emitNet('sync:nui:hide', source);
 });

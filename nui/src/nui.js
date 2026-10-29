@@ -91,6 +91,17 @@ function mockNui(event, data) {
   if (event === 'close') {
     return { ok: true };
   }
+  if (event === 'previewAppearance') {
+    return { ok: true };
+  }
+  if (event === 'saveAppearance') {
+    const ch = mockState.characters.find((c) => c.id === data.characterId);
+    if (ch) ch.appearance = data.appearance;
+    return { ok: true, character: ch };
+  }
+  if (event === 'shellReady') {
+    return { ok: true };
+  }
   return { ok: false, error: 'mock-unknown' };
 }
 

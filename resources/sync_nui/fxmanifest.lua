@@ -4,7 +4,7 @@ game 'gta5'
 name 'sync_nui'
 author 'SyncRP'
 description 'SyncRP NUI shell — character select'
-version '0.3.2'
+version '0.3.3'
 
 node_version '22'
 
@@ -15,7 +15,10 @@ files {
     'html/assets/*',
 }
 
-client_script 'client/main.lua'
+client_scripts {
+    'client/appearance.lua',
+    'client/main.lua',
+}
 server_script 'server/main.js'
 
 dependency 'sync_characters'

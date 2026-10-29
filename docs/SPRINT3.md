@@ -19,12 +19,14 @@
 
 1. `playerConnecting` — SyncCore проверяет/создаёт `accounts` + `account_identifiers` по FiveM identifiers (license и др.).
 2. `playerJoining` — открывается `sessions`, `sync:core:playerRegistered`.
-3. `sync_nui` открывает NUI:
-   - новый аккаунт → **Регистрация персонажа** (форма создания, закрыть нельзя);
-   - есть персонажи → **Вход в город** (список, закрыть нельзя пока не выбран).
-4. Create → INSERT в `characters` → сразу select + spawn.
-5. Select → `sessions.character_id`, spawn по `position_*` или default.
-6. В мире: клиент каждые 30с шлёт coords; на disconnect позиция пишется в БД.
+3. `sync_nui` **сам** открывает NUI (nudge до ack; ждать session + loading screen):
+   - новый аккаунт → **Регистрация персонажа**;
+   - есть персонажи → **Вход в город**.
+4. Create → INSERT → **редактор внешности** (лицо / волосы / одежда / props) → `appearance_json` → select + spawn.
+5. Select без внешности → снова редактор; с внешностью → spawn freemode + apply.
+6. В мире: coords каждые 30с; на disconnect позиция в БД.
+
+Миграция: `005_character_appearance.sql` (`appearance_json`).
 
 ## Build NUI
 
@@ -40,6 +42,8 @@ npm.cmd run build
 ```powershell
 cd F:\SyncRP2.0\sync_rp_fivem
 git pull origin cursor/stage-3-nui-characters-5b89
+$env:SYNC_DB_DSN="mysql://syncrp:ВАШ_ПАРОЛЬ@127.0.0.1:3306/syncrp"
+npm.cmd run migrate
 cd nui && npm.cmd ci && npm.cmd run build && cd ..
 
 xcopy /E /I /Y resources\sync_nui        F:\SyncRP2.0\sync\resources\sync_nui

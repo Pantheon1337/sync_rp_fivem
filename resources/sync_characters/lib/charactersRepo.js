@@ -11,7 +11,21 @@ function loadValidate() {
   return require('./validate.js');
 }
 
+function loadAppearance() {
+  const g = globalThis;
+  if (typeof g.GetResourcePath === 'function' && typeof g.GetCurrentResourceName === 'function') {
+    return require(path.join(g.GetResourcePath(g.GetCurrentResourceName()), 'lib', 'appearance.js'));
+  }
+  return require('./appearance.js');
+}
+
 const { normalizeName, normalizeGender, normalizeDob, nextFreeSlot } = loadValidate();
+const {
+  MALE_MODEL,
+  FEMALE_MODEL,
+  normalizeAppearance,
+  parseAppearanceJson,
+} = loadAppearance();
 
 function formatDob(value) {
   if (value == null) return null;
@@ -24,6 +38,8 @@ function formatDob(value) {
 
 function rowToCharacter(row) {
   if (!row) return null;
+  const gender = row.gender;
+  const appearance = parseAppearanceJson(row.appearance_json, gender);
   return {
     id: Number(row.id),
     uuid: row.uuid,
@@ -32,7 +48,7 @@ function rowToCharacter(row) {
     firstName: row.first_name,
     lastName: row.last_name,
     dateOfBirth: formatDob(row.date_of_birth),
-    gender: row.gender,
+    gender,
     cash: Number(row.cash),
     bank: Number(row.bank),
     position:
@@ -44,7 +60,9 @@ function rowToCharacter(row) {
             z: Number(row.position_z),
             h: Number(row.position_h || 0),
           },
-    model: row.model || null,
+    model: row.model || (appearance && appearance.model) || null,
+    appearance,
+    needsAppearance: appearance == null,
   };
 }
 
@@ -77,9 +95,7 @@ function createCharactersRepo(db, options = {}) {
     const lastName = normalizeName(input.lastName);
     const gender = normalizeGender(input.gender);
     const dateOfBirth = normalizeDob(input.dateOfBirth || '1995-01-01');
-    // Story peds until appearance editor (freemode without outfit looks "empty")
-    const model =
-      input.model || (gender === 'female' ? 'a_f_y_hipster_01' : 'a_m_y_hipster_01');
+    const model = gender === 'female' ? FEMALE_MODEL : MALE_MODEL;
 
     const existing = await listByAccount(accountId);
     const slot = nextFreeSlot(
@@ -94,8 +110,8 @@ function createCharactersRepo(db, options = {}) {
     const result = await db.transaction([
       {
         sql: `INSERT INTO characters
-          (uuid, account_id, slot, first_name, last_name, date_of_birth, gender, model)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          (uuid, account_id, slot, first_name, last_name, date_of_birth, gender, model, appearance_json)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
         params: [uuid, accountId, slot, firstName, lastName, dateOfBirth, gender, model],
       },
     ]);
@@ -115,11 +131,6 @@ function createCharactersRepo(db, options = {}) {
     return true;
   }
 
-  /**
-   * Persist last known world position (logout / autosave).
-   * @param {number} characterId
-   * @param {{ x: number, y: number, z: number, h?: number }} pos
-   */
   async function savePosition(characterId, pos) {
     const id = Number(characterId);
     const x = Number(pos && pos.x);
@@ -141,7 +152,32 @@ function createCharactersRepo(db, options = {}) {
     return Number(result.affectedRows || 0) > 0;
   }
 
-  return { listByAccount, get, create, softDelete, savePosition, maxSlots, rowToCharacter };
+  async function saveAppearance(accountId, characterId, appearanceInput) {
+    const ch = await get(characterId);
+    if (!ch || ch.accountId !== Number(accountId)) {
+      throw new Error('sync_characters: персонаж не найден');
+    }
+    const appearance = normalizeAppearance(appearanceInput, ch.gender);
+    const json = JSON.stringify(appearance);
+    await db.query(
+      `UPDATE characters
+       SET appearance_json = ?, model = ?
+       WHERE id = ? AND account_id = ? AND deleted_at IS NULL`,
+      [json, appearance.model, characterId, accountId],
+    );
+    return get(characterId);
+  }
+
+  return {
+    listByAccount,
+    get,
+    create,
+    softDelete,
+    savePosition,
+    saveAppearance,
+    maxSlots,
+    rowToCharacter,
+  };
 }
 
 module.exports = { createCharactersRepo, rowToCharacter };
