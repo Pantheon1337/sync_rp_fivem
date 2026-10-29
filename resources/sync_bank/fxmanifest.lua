@@ -4,7 +4,7 @@ game 'gta5'
 name 'sync_bank'
 author 'SyncRP'
 description 'SyncRP bank NUI + world bank/ATM locations'
-version '0.4.3'
+version '0.4.4'
 
 node_version '22'
 

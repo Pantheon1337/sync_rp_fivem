@@ -3,6 +3,7 @@
 --   1) CLIENT-ONLY natives (AddBlipForCoord) — server cannot draw map icons
 --   2) Lua coord table (config/blips.lua), not JSON
 --   3) CreateThread at start + recreate after character select / spawn
+-- Legend: all ATMs share SetBlipCategory + identical name → one pause-map entry.
 -- Sprite: SyncBankBlips.sprite (default 605 radar_nhp_starterpack)
 
 local active = {}
@@ -17,16 +18,30 @@ local function clearBlips()
   active = {}
 end
 
-local function addOne(x, y, z, name, scale, shortRange)
+local function registerLegendCategories()
+  local cfg = SyncBankBlips
+  if not cfg then return end
+  local bankCat = tonumber(cfg.bankCategory)
+  local atmCat = tonumber(cfg.atmCategory)
+  if bankCat and bankCat >= 12 and bankCat <= 133 then
+    AddTextEntry('BLIP_CAT_' .. tostring(bankCat), cfg.bankCategoryLabel or 'Банки')
+  end
+  if atmCat and atmCat >= 12 and atmCat <= 133 then
+    AddTextEntry('BLIP_CAT_' .. tostring(atmCat), cfg.atmCategoryLabel or 'Банкоматы')
+  end
+end
+
+local function addOne(x, y, z, name, scale, shortRange, category)
   local cfg = SyncBankBlips
   local blip = AddBlipForCoord(x + 0.0, y + 0.0, z + 0.0)
   SetBlipSprite(blip, tonumber(cfg.sprite) or 605)
   SetBlipColour(blip, tonumber(cfg.colour) or 2)
   SetBlipScale(blip, scale or 0.85)
   SetBlipAsShortRange(blip, shortRange and true or false)
-  -- ESX uses AddTextComponentString; qb often sets Display 4 — we keep ESX naming
-  -- and Display 2 (both main map + minimap, selectable) per FiveM natives docs.
   SetBlipDisplay(blip, 2)
+  if category and category >= 12 then
+    SetBlipCategory(blip, category)
+  end
   BeginTextCommandSetBlipName('STRING')
   AddTextComponentString(name or 'Банк')
   EndTextCommandSetBlipName(blip)
@@ -42,19 +57,26 @@ local function createBlips()
     return 0
   end
 
+  registerLegendCategories()
+
   local sprite = tonumber(cfg.sprite) or 605
+  local bankCat = tonumber(cfg.bankCategory) or 12
+  local atmCat = tonumber(cfg.atmCategory) or 13
+  local atmName = cfg.atmBlipName or 'Банкомат'
   local banks = 0
   local atms = 0
 
   if cfg.showBanks ~= false then
     for _, item in pairs(cfg.banks or {}) do
+      -- Distinct branch names stay selectable; category groups them under "Банки".
       addOne(
         item.x,
         item.y,
         item.z,
         item.name or 'Банк',
         cfg.scaleBank or 0.9,
-        cfg.shortRangeBanks == true
+        cfg.shortRangeBanks == true,
+        bankCat
       )
       banks = banks + 1
     end
@@ -62,34 +84,34 @@ local function createBlips()
 
   if cfg.showAtms ~= false then
     for _, item in pairs(cfg.atms or {}) do
+      -- Same name + same category → one legend line for all ATMs.
       addOne(
         item.x,
         item.y,
         item.z,
-        item.name or 'Банкомат',
+        atmName,
         cfg.scaleAtm or 0.7,
-        cfg.shortRangeAtms ~= false
+        cfg.shortRangeAtms ~= false,
+        atmCat
       )
       atms = atms + 1
     end
   end
 
-  print(('[sync_bank] map blips ready sprite=%s total=%s banks=%s atms=%s'):format(
+  print(('[sync_bank] map blips ready sprite=%s total=%s banks=%s atms=%s atmCat=%s'):format(
     tostring(sprite),
     tostring(#active),
     tostring(banks),
-    tostring(atms)
+    tostring(atms),
+    tostring(atmCat)
   ))
   return #active
 end
 
--- ESX pattern: create as soon as the client script loads.
 Citizen.CreateThread(function()
   createBlips()
 end)
 
--- qb-banking pattern: recreate when the player actually enters the world
--- (character select / spawn can wipe or precede radar readiness).
 RegisterNetEvent('sync:characters:selected', function()
   createBlips()
 end)
@@ -115,4 +137,4 @@ AddEventHandler('onResourceStop', function(res)
   clearBlips()
 end)
 
-print('[sync_bank] blips client loaded (ESX/QB pattern, sprite 605)')
+print('[sync_bank] blips client loaded (legend categories + sprite 605)')

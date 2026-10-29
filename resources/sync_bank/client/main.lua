@@ -200,11 +200,37 @@ RegisterNetEvent('sync:bank:transferResult', function(result)
   })
 end)
 
-local function drawPrompt(spot)
-  local label = spot.type == 'atm' and 'E — Банкомат' or 'E — Банк'
-  SetTextComponentFormat('STRING')
-  AddTextComponentString(label)
-  DisplayHelpTextFromStringLabel(0, 0, 1, -1)
+--- ESX-style world prompt: marker at feet + floating checkbox label (not top-left help).
+local function drawWorldText3D(x, y, z, text)
+  local onScreen, sx, sy = World3dToScreen2d(x, y, z)
+  if not onScreen then return end
+  SetTextScale(0.32, 0.32)
+  SetTextFont(4)
+  SetTextProportional(true)
+  SetTextColour(255, 255, 255, 230)
+  SetTextCentre(true)
+  SetTextEntry('STRING')
+  AddTextComponentString(text)
+  DrawText(sx, sy)
+  local factor = math.min(#text / 42.0, 1.2)
+  DrawRect(sx, sy + 0.0125, 0.016 + factor * 0.028, 0.03, 12, 18, 28, 180)
+end
+
+local function drawWorldPrompt(spot)
+  local x, y, z = spot.x + 0.0, spot.y + 0.0, spot.z + 0.0
+  local title = spot.type == 'atm' and 'Банкомат' or 'Банк'
+  -- Soft ground marker (ring) so the interact point is obvious at the machine.
+  DrawMarker(
+    25, -- checkered cylinder / ring
+    x, y, z - 0.98,
+    0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0,
+    0.45, 0.45, 0.45,
+    56, 140, 255, 140,
+    false, false, 2, false, nil, nil, false
+  )
+  -- Floating checkbox-style prompt above the point.
+  drawWorldText3D(x, y, z + 1.05, ('☐  [E]  %s'):format(title))
 end
 
 CreateThread(function()
@@ -219,7 +245,7 @@ CreateThread(function()
     nearSpot = findNearby()
     if nearSpot and not open then
       sleep = 0
-      drawPrompt(nearSpot)
+      drawWorldPrompt(nearSpot)
       if IsControlJustReleased(0, 38) then -- E
         setOpen(true, nearSpot)
       end
