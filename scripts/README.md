@@ -16,16 +16,19 @@
 ```powershell
 cd F:\SyncRP2.0\sync_rp_fivem
 
-# Только HUD после фикса UI
-.\scripts\deploy-po.ps1 -Targets hud
+# Через .cmd — не упирается в ExecutionPolicy
+.\scripts\deploy-po.cmd -Targets hud
 
 # HUD + банк + economy (+ миграция)
-.\scripts\deploy-po.ps1 -Targets hud,bank,economy -Migrate `
+.\scripts\deploy-po.cmd -Targets hud,bank,economy -Migrate `
   -Dsn "mysql://syncrp:ВАШ_ПАРОЛЬ@127.0.0.1:3306/syncrp"
 
 # Всё Stage 4 UI
-.\scripts\deploy-po.ps1 -Targets hud,bank,chat,nui,economy
+.\scripts\deploy-po.cmd -Targets hud,bank,chat,nui,economy
 ```
+
+Если ругается ExecutionPolicy на `.ps1` напрямую — всегда зови `.cmd`, либо:
+`powershell -ExecutionPolicy Bypass -File .\scripts\deploy-po.ps1 -Targets hud`
 
 Потом в **txAdmin → Live Console** или консоли FXServer:
 
