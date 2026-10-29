@@ -28,6 +28,7 @@ ensure sync_sessions
 ensure sync_core
 ensure sync_characters
 ensure sync_spawn
+# sync_nui after characters/spawn (soft order — no fxmanifest hard deps)
 ensure sync_nui
 ensure sync_chat
 ensure sync_economy

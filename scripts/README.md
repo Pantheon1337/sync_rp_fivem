@@ -36,11 +36,13 @@ cd F:\SyncRP2.0\sync_rp_fivem
 exec syncrp-hotreload.cfg
 ```
 
-Скрипт пишет `stop` → `ensure` в правильном порядке (characters/spawn **до** nui), плюс финальный `ensure sync_nui` — иначе рестарт `sync_characters` гасит NUI и он остаётся выключенным.
+`sync_nui` больше **без** hard `dependency` на characters/spawn — иначе FiveM гасил NUI при их restart.
+
+Hotreload: `restart` ресурсов, затем в конце `ensure/restart/ensure sync_nui` (вручную поднимать не нужно). При деплое characters/spawn nui копируется автоматически.
 
 После `exec` — **переподключите клиент** (CEF кэширует старый html).
 
-В консоли FX после hotreload должно быть: `[sync_characters] loaded … create=hardened`.
+В консоли FX: `[sync_characters] loaded … create=hardened` и `Started resource sync_nui`.
 
 ### Когда всё же нужен полный рестарт FX
 
