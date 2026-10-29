@@ -68,6 +68,22 @@ ensure sync_nui
 5. Модель видна (hipster ped)
 6. Fallback: `/charsui` снова открывает UI (после входа можно закрыть)
 
+## Нет меню NUI (только chat про fallback)
+
+Сообщение в чате про `/chars` шлёт **`sync_characters`**, не NUI. Если меню нет:
+
+1. В `server.cfg` после `sync_spawn` должно быть: `ensure sync_nui`
+2. В консоли FX при старте: `Started resource sync_nui` и `[sync_nui] loaded`
+3. Скопировать ресурс + html:
+   ```powershell
+   cd F:\SyncRP2.0\sync_rp_fivem
+   git pull origin cursor/stage-3-nui-characters-5b89
+   cd nui && npm.cmd ci && npm.cmd run build && cd ..
+   xcopy /E /I /Y resources\sync_nui F:\SyncRP2.0\sync\resources\sync_nui
+   ```
+4. Рестарт FX → в игре F8: строки `[sync_nui] clientReady` / `openCharacters`
+5. Сразу попробовать: `/charsui` — если и это пусто, `sync_nui` не запущен или нет `html\index.html`
+
 ## Playwright (host)
 
 ```powershell

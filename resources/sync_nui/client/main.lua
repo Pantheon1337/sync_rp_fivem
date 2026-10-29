@@ -1,6 +1,7 @@
 local nuiOpen = false
 local mustSelect = false
 local pending = {}
+local announcedReady = false
 
 local function setFocus(state)
   nuiOpen = state
@@ -18,12 +19,25 @@ local function openCharacters(meta)
     mustSelect = mustSelect,
     forceCreate = meta.forceCreate == true,
   })
+  print(('[sync_nui] openCharacters mustSelect=%s isNewAccount=%s'):format(
+    tostring(mustSelect),
+    tostring(meta.isNewAccount == true)
+  ))
 end
 
 local function closeNui()
   mustSelect = false
   setFocus(false)
   SendNUIMessage({ action = 'close' })
+end
+
+local function announceReady()
+  if announcedReady then
+    return
+  end
+  announcedReady = true
+  TriggerServerEvent('sync:nui:clientReady')
+  print('[sync_nui] clientReady sent')
 end
 
 RegisterNetEvent('sync:nui:showCharacterSelect', function(meta)
@@ -103,6 +117,28 @@ end)
 RegisterCommand('charsui', function()
   openCharacters({ mustSelect = false, isNewAccount = false })
 end, false)
+
+-- Client may load after playerRegistered — tell server we can receive NUI open
+CreateThread(function()
+  Wait(500)
+  announceReady()
+  -- Second try after spawn/load screen settles
+  Wait(2500)
+  if not nuiOpen then
+    announcedReady = false
+    announceReady()
+  end
+end)
+
+AddEventHandler('onClientResourceStart', function(res)
+  if res == GetCurrentResourceName() then
+    announcedReady = false
+    CreateThread(function()
+      Wait(200)
+      announceReady()
+    end)
+  end
+end)
 
 AddEventHandler('onResourceStop', function(res)
   if res == GetCurrentResourceName() and nuiOpen then
