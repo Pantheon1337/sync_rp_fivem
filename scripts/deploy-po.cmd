@@ -11,7 +11,7 @@ if not exist "%PS1%" (
 )
 
 REM Guard: if someone pasted console output into the .ps1, refuse to run it
-findstr /B /C:"<# " "%PS1%" >nul
+findstr /B /C:"<#" "%PS1%" >nul
 if errorlevel 1 (
   echo ERROR: scripts\deploy-po.ps1 looks corrupted ^(console paste?^).
   echo Restore with:
