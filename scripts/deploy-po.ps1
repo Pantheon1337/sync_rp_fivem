@@ -8,7 +8,8 @@
   `exec syncrp-hotreload.cfg` in the server console (or txAdmin Live Console).
 
 .PARAMETER Branch
-  Git branch (default: current branch).
+  Git branch to deploy. If empty, uses current branch (DANGEROUS if you stayed on an old branch).
+  Prefer always passing: -Branch cursor/stage-4-esx-char-ux-5b89
 
 .PARAMETER ServerData
   FX server-data path (default: F:\SyncRP2.0\sync).
@@ -33,8 +34,8 @@
   Skip NUI build (xcopy existing build only).
 
 .EXAMPLE
-  .\scripts\deploy-po.cmd -Targets hud
-  .\scripts\deploy-po.cmd -Targets hud,bank,economy,needs -Migrate -Dsn "mysql://syncrp:PASS@127.0.0.1:3306/syncrp"
+  .\scripts\deploy-po.cmd -Branch cursor/stage-4-esx-char-ux-5b89 -Targets nui,characters,spawn,hud
+  .\scripts\deploy-po.cmd -Branch cursor/stage-4-esx-char-ux-5b89 -Targets hud,bank,economy,needs -Migrate -Dsn "mysql://syncrp:PASS@127.0.0.1:3306/syncrp"
 #>
 
 [CmdletBinding()]
@@ -89,24 +90,38 @@ $htmlRoots = @(
   'resources/sync_nui/html'
 )
 
-Write-Step 'Reset local NUI html (so git pull does not abort)'
+Write-Step 'Reset local NUI html (so branch switch / pull does not abort)'
 foreach ($h in $htmlRoots) {
   $p = Join-Path $Repo $h
   if (Test-Path $p) {
     git checkout -- $h 2>$null
-    git clean -fd $h 2>$null | Out-Null
+    git clean -fd -- $h 2>$null | Out-Null
   }
 }
 
 if (-not $SkipPull) {
   if (-not $Branch) {
     $Branch = (git rev-parse --abbrev-ref HEAD).Trim()
+    Write-Host ''
+    Write-Host "WARNING: -Branch not set — deploying CURRENT branch: $Branch" -ForegroundColor Yellow
+    Write-Host 'If FX looks outdated, pass the feature branch explicitly, e.g.:' -ForegroundColor Yellow
+    Write-Host '  .\scripts\deploy-po.cmd -Branch cursor/stage-4-esx-char-ux-5b89 -Targets nui,characters,spawn,hud' -ForegroundColor Green
+    Write-Host ''
   }
-  Write-Step "git pull origin $Branch"
+  Write-Step "git fetch/checkout/reset origin/$Branch"
   git fetch origin $Branch
-  git checkout $Branch
-  git pull origin $Branch
-  Write-Host ('HEAD: ' + (git rev-parse --short HEAD))
+  if ($LASTEXITCODE -ne 0) { throw "git fetch failed ($LASTEXITCODE)" }
+  # -f discards leftover local edits that block checkout (PO machine = deploy only)
+  git checkout -f $Branch
+  if ($LASTEXITCODE -ne 0) { throw "git checkout -f $Branch failed ($LASTEXITCODE)" }
+  git reset --hard "origin/$Branch"
+  if ($LASTEXITCODE -ne 0) { throw "git reset --hard origin/$Branch failed ($LASTEXITCODE)" }
+  $head = (git rev-parse --short HEAD).Trim()
+  $on = (git rev-parse --abbrev-ref HEAD).Trim()
+  Write-Host "HEAD: $head  branch: $on" -ForegroundColor Green
+  if ($on -ne $Branch) {
+    throw "Still on '$on' after checkout — expected '$Branch'"
+  }
 }
 else {
   Write-Step 'SkipPull - pull skipped'
@@ -160,6 +175,21 @@ elseif ($SkipBuild) {
   Write-Step 'SkipBuild - NUI build skipped'
 }
 
+# Sanity: feature-branch markers must exist before we copy to FX.
+if (($Targets -contains 'characters') -or ($Targets -contains 'nui') -or ($Targets -contains 'all')) {
+  $charsMain = Join-Path $Repo 'resources\sync_characters\server\main.js'
+  $nuiFx = Join-Path $Repo 'resources\sync_nui\fxmanifest.lua'
+  $charsTxt = if (Test-Path $charsMain) { Get-Content -LiteralPath $charsMain -Raw } else { '' }
+  $nuiTxt = if (Test-Path $nuiFx) { Get-Content -LiteralPath $nuiFx -Raw } else { '' }
+  if ($charsTxt -notmatch 'create=hardened') {
+    throw "Repo tree missing create=hardened in sync_characters — wrong/old branch. Pass -Branch cursor/stage-4-esx-char-ux-5b89"
+  }
+  if ($nuiTxt -match "dependency 'sync_characters'") {
+    throw "sync_nui still has hard dependency on sync_characters — wrong/old tree. Pass -Branch cursor/stage-4-esx-char-ux-5b89"
+  }
+  Write-Host 'Repo markers OK: create=hardened, sync_nui soft-deps' -ForegroundColor Green
+}
+
 Write-Step "xcopy -> $ServerData\resources"
 $destRoot = Join-Path $ServerData 'resources'
 $map = @{
@@ -190,6 +220,14 @@ foreach ($t in $Targets) {
   Write-Host "  $name"
   & cmd.exe /c "xcopy /E /I /Y `"$src`" `"$dst`"" | Out-Null
   if ($LASTEXITCODE -gt 1) { throw "xcopy failed for $name (code $LASTEXITCODE)" }
+  if ($name -eq 'sync_characters') {
+    $dstMain = Join-Path $dst 'server\main.js'
+    $dstTxt = if (Test-Path $dstMain) { Get-Content -LiteralPath $dstMain -Raw } else { '' }
+    if ($dstTxt -notmatch 'create=hardened') {
+      throw "After xcopy, $dstMain still missing create=hardened — FX server-data not updated"
+    }
+    Write-Host '  verified FX sync_characters has create=hardened' -ForegroundColor Green
+  }
   [void]$restartList.Add($name)
 }
 
