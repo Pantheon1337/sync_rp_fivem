@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSyncStore } from '../store';
 import { defaultAppearance, mergeAppearance } from '../appearanceDefaults';
+import { APPEARANCE_LIMITS, mergeAppearanceLimits } from '../appearanceLimits';
 import { nuiFetch } from '../nui';
 import { TilePicker, ColorSwatchGrid, FeatureChips } from './appearance/TilePicker';
 
@@ -12,18 +13,6 @@ const TABS = [
   { id: 'props', label: 'Аксесс.', icon: '◈' },
 ];
 
-const DEFAULT_LIMITS = {
-  components: {
-    '0': 45, '1': 200, '2': 80, '3': 200, '4': 200, '5': 100,
-    '6': 120, '7': 160, '8': 200, '9': 30, '10': 100, '11': 400,
-  },
-  props: { '0': 180, '1': 40, '2': 40, '6': 40, '7': 20 },
-  overlays: { '1': 28, '2': 33 },
-  hairColors: 64,
-  eyeColors: 32,
-  headBlend: 46,
-};
-
 export function AppearanceEditor() {
   const character = useSyncStore((s) => s.appearanceCharacter);
   const appearance = useSyncStore((s) => s.appearance);
@@ -31,25 +20,35 @@ export function AppearanceEditor() {
   const saveAppearance = useSyncStore((s) => s.saveAppearance);
   const loading = useSyncStore((s) => s.loading);
   const [tab, setTab] = useState('face');
-  const [limits, setLimits] = useState(DEFAULT_LIMITS);
+  const [limits, setLimits] = useState(() => mergeAppearanceLimits(null));
+
+  const refreshLimits = useCallback(async (model) => {
+    const res = await nuiFetch('getAppearanceLimits', { model: model || null });
+    if (!res?.ok) return;
+    setLimits(mergeAppearanceLimits(res.limits || null));
+  }, []);
 
   useEffect(() => {
+    if (!appearance?.model) return;
     let cancelled = false;
     (async () => {
-      const res = await nuiFetch('getAppearanceLimits', {});
-      if (cancelled || !res?.ok || !res.limits) return;
-      setLimits({ ...DEFAULT_LIMITS, ...res.limits });
+      // Apply freemode first, then read native counts (merge never shrinks floors)
+      await nuiFetch('previewAppearance', { appearance });
+      if (cancelled) return;
+      await refreshLimits(appearance.model);
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+    // only re-bind when model/gender ped changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appearance?.model, character?.gender, refreshLimits]);
 
   useEffect(() => {
     if (!appearance) return;
     const t = setTimeout(() => {
       nuiFetch('previewAppearance', { appearance });
-    }, 60);
+    }, 50);
     return () => clearTimeout(t);
   }, [appearance]);
 
@@ -69,6 +68,10 @@ export function AppearanceEditor() {
     const next = { ...cur, [field]: value };
     if (field === 'drawable') next.texture = 0;
     patch({ components: { [key]: next } });
+    if (field === 'drawable') {
+      // texture count depends on drawable — refresh after preview settles
+      setTimeout(() => refreshLimits(appearance.model), 120);
+    }
   }
 
   function setProp(id, field, value) {
@@ -96,10 +99,16 @@ export function AppearanceEditor() {
   }
 
   const compMax = (id) =>
-    Math.max(0, (limits.components?.[String(id)] ?? DEFAULT_LIMITS.components[String(id)] ?? 20) - 1);
+    Math.max(
+      0,
+      (limits.components?.[String(id)] ?? APPEARANCE_LIMITS.components[String(id)] ?? 40) - 1,
+    );
   const propMax = (id) =>
-    Math.max(0, (limits.props?.[String(id)] ?? DEFAULT_LIMITS.props[String(id)] ?? 10) - 1);
-  const overlayMax = (id) => limits.overlays?.[String(id)] ?? DEFAULT_LIMITS.overlays[String(id)] ?? 20;
+    Math.max(0, (limits.props?.[String(id)] ?? APPEARANCE_LIMITS.props[String(id)] ?? 20) - 1);
+  const overlayMax = (id) =>
+    (limits.overlays?.[String(id)] ?? APPEARANCE_LIMITS.overlays[String(id)] ?? 20) - 1;
+  const texMax = (id) =>
+    Math.max(0, (limits.textures?.[String(id)] ?? APPEARANCE_LIMITS.textures[String(id)] ?? 25) - 1);
 
   return (
     <div className="sync-glass animate-panel-in flex max-h-[82vh] flex-col p-5 md:p-6">
@@ -107,7 +116,8 @@ export function AppearanceEditor() {
         <div>
           <h2 className="font-display text-xl font-bold text-sync-text">Внешность</h2>
           <p className="mt-1 text-sm text-sync-muted">
-            {character.firstName} {character.lastName} — выбирайте стиль плитками, не ползунками.
+            {character.firstName} {character.lastName} — плитки стилей (скриншоты на плитки добавим
+            позже). Листайте страницы, если вариантов много.
           </p>
         </div>
         <button type="button" className="sync-btn sync-btn-ghost" onClick={resetDefaults}>
@@ -272,7 +282,7 @@ export function AppearanceEditor() {
               icon="▦"
               value={appearance.components['11']?.texture || 0}
               min={0}
-              max={Math.max(0, (limits.textures?.['11'] ?? 25) - 1)}
+              max={texMax(11)}
               onChange={(v) => setComponent(11, 'texture', v)}
             />
             <TilePicker
@@ -317,7 +327,7 @@ export function AppearanceEditor() {
               icon="▦"
               value={appearance.components['4']?.texture || 0}
               min={0}
-              max={Math.max(0, (limits.textures?.['4'] ?? 25) - 1)}
+              max={texMax(4)}
               onChange={(v) => setComponent(4, 'texture', v)}
             />
             <TilePicker
@@ -333,7 +343,7 @@ export function AppearanceEditor() {
               icon="▦"
               value={appearance.components['6']?.texture || 0}
               min={0}
-              max={Math.max(0, (limits.textures?.['6'] ?? 25) - 1)}
+              max={texMax(6)}
               onChange={(v) => setComponent(6, 'texture', v)}
             />
             <TilePicker

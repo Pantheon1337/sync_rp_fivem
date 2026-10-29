@@ -183,24 +183,45 @@ RegisterNUICallback('previewAppearance', function(data, cb)
   cb({ ok = true })
 end)
 
-RegisterNUICallback('getAppearanceLimits', function(_, cb)
+-- Floors so UI never collapses if ped isn't freemode yet (NUI also merges upward).
+local LIMIT_FLOORS = {
+  components = {
+    ['0'] = 46, ['1'] = 210, ['2'] = 80, ['3'] = 200, ['4'] = 200, ['5'] = 110,
+    ['6'] = 130, ['7'] = 180, ['8'] = 210, ['9'] = 40, ['10'] = 110, ['11'] = 450,
+  },
+  props = { ['0'] = 200, ['1'] = 50, ['2'] = 45, ['6'] = 45, ['7'] = 25 },
+}
+
+local function maxnum(a, b)
+  a = tonumber(a) or 0
+  b = tonumber(b) or 0
+  if a > b then return a end
+  return b
+end
+
+RegisterNUICallback('getAppearanceLimits', function(data, cb)
+  local modelName = data and data.model
+  if type(modelName) == 'string' and modelName ~= '' then
+    SyncNuiPreviewAppearance({ model = modelName })
+    Wait(150)
+  end
+
   local ped = PlayerPedId()
   local components = {}
   local textures = {}
   for i = 0, 11 do
-    local drawables = GetNumberOfPedDrawableVariations(ped, i)
-    if not drawables or drawables < 1 then
-      drawables = 1
-    end
-    components[tostring(i)] = drawables
+    local drawables = GetNumberOfPedDrawableVariations(ped, i) or 0
+    local floor = LIMIT_FLOORS.components[tostring(i)] or 40
+    components[tostring(i)] = maxnum(drawables, floor)
     local current = GetPedDrawableVariation(ped, i)
-    local tex = GetNumberOfPedTextureVariations(ped, i, current)
-    textures[tostring(i)] = (tex and tex > 0) and tex or 1
+    local tex = GetNumberOfPedTextureVariations(ped, i, current) or 0
+    textures[tostring(i)] = maxnum(tex, 25)
   end
   local props = {}
   for _, id in ipairs({ 0, 1, 2, 6, 7 }) do
-    local n = GetNumberOfPedPropDrawableVariations(ped, id)
-    props[tostring(id)] = (n and n > 0) and n or 1
+    local n = GetNumberOfPedPropDrawableVariations(ped, id) or 0
+    local floor = LIMIT_FLOORS.props[tostring(id)] or 20
+    props[tostring(id)] = maxnum(n, floor)
   end
   cb({
     ok = true,
@@ -208,7 +229,7 @@ RegisterNUICallback('getAppearanceLimits', function(_, cb)
       components = components,
       textures = textures,
       props = props,
-      overlays = { ['1'] = 29, ['2'] = 34 },
+      overlays = { ['1'] = 29, ['2'] = 34, ['4'] = 75, ['5'] = 33, ['8'] = 11, ['10'] = 17 },
       hairColors = 64,
       eyeColors = 32,
       headBlend = 46,
