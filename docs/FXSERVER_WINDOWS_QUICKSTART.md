@@ -92,19 +92,20 @@ cd F:\SyncRP2.0\sync_rp_fivem
 
 ### Шаг 4 — ресурсы SyncCore в `F:\SyncRP2.0\sync\resources`
 
-**Вариант A (рекомендуется) — junction**, чтобы `git pull` сразу попадал на сервер:
+**Только копия внутрь `sync\resources`.**  
+Junction/symlink на `sync_rp_fivem\...` ломает Node sandbox FiveM (`no device found` / `allow-fs-read`): ресурс должен физически лежать под server-data.
+
+Если раньше делали `mklink /J` — сначала удалите junctions:
 
 ```powershell
-# от администратора, если понадобится
 cd F:\SyncRP2.0\sync\resources
-
-cmd /c mklink /J sync_db       F:\SyncRP2.0\sync_rp_fivem\resources\sync_db
-cmd /c mklink /J sync_identity F:\SyncRP2.0\sync_rp_fivem\resources\sync_identity
-cmd /c mklink /J sync_sessions F:\SyncRP2.0\sync_rp_fivem\resources\sync_sessions
-cmd /c mklink /J sync_core     F:\SyncRP2.0\sync_rp_fivem\resources\sync_core
+cmd /c rmdir sync_db
+cmd /c rmdir sync_identity
+cmd /c rmdir sync_sessions
+cmd /c rmdir sync_core
 ```
 
-**Вариант B — копия** (после каждого pull копировать заново):
+Затем скопируйте (после каждого `git pull` повторять):
 
 ```powershell
 xcopy /E /I /Y F:\SyncRP2.0\sync_rp_fivem\resources\sync_db       F:\SyncRP2.0\sync\resources\sync_db
@@ -113,7 +114,7 @@ xcopy /E /I /Y F:\SyncRP2.0\sync_rp_fivem\resources\sync_sessions F:\SyncRP2.0\s
 xcopy /E /I /Y F:\SyncRP2.0\sync_rp_fivem\resources\sync_core     F:\SyncRP2.0\sync\resources\sync_core
 ```
 
-Проверьте, что внутри `sync_db` есть папка `node_modules` (после шага 3).
+Проверьте: `F:\SyncRP2.0\sync\resources\sync_db\node_modules` существует (после `npm.cmd ci` в git-клоне).
 
 ---
 
