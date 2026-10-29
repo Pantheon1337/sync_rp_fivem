@@ -4,13 +4,14 @@ game 'gta5'
 name 'sync_spawn'
 author 'SyncRP'
 description 'SyncCore character spawn'
-version '0.2.1'
+version '0.2.2'
 
 node_version '22'
 
 server_script 'server/main.js'
 client_script 'client/main.lua'
 
-dependency 'sync_core'
+-- Only depend on resources that also run on the client.
+-- sync_core is server_only — do not list it here (breaks client join).
 dependency 'sync_characters'
 dependency '/server:12913'
