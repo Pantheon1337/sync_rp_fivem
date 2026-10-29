@@ -46,14 +46,14 @@ body,
     0 2px 8px rgba(0, 0, 0, 0.85);
 }
 
-/* Vertical stack to the RIGHT of GTA minimap */
+/* Vertical stack just RIGHT of GTA minimap (gap so rings don't sit on the map) */
 .hud-needs {
   position: absolute;
-  left: 18.2vh;
-  bottom: 3.2vh;
+  left: 22.5vh;
+  bottom: 4.5vh;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.7rem;
   align-items: center;
 }
 

@@ -83,7 +83,9 @@ export default function BankApp() {
   const [error, setError] = useState('');
   const [history, setHistory] = useState([]);
   const [presetDir, setPresetDir] = useState('deposit');
-  const [cardMask] = useState(() => `**** ${String(1000 + Math.floor(Math.random() * 9000))}`);
+  // Placeholder only — persistent bank account number is Stage 16 (Banks extended).
+  // Do NOT invent random digits; server will allocate a real account id later.
+  const cardMask = '**** ----';
 
   const applyBalances = useCallback((b) => {
     if (!b) return;
