@@ -1,8 +1,19 @@
 'use strict';
 
 const path = require('path');
-const root = GetResourcePath(GetCurrentResourceName());
-const { createCharactersRepo } = require(path.join(root, 'lib', 'charactersRepo.js'));
+
+let createCharactersRepo;
+try {
+  const root = GetResourcePath(GetCurrentResourceName());
+  ({ createCharactersRepo } = require(path.join(root, 'lib', 'charactersRepo.js')));
+  console.log('[sync_characters] modules loaded from', root);
+} catch (err) {
+  console.error(
+    '[sync_characters] FATAL module load:',
+    err && err.stack ? err.stack : err && err.message ? err.message : err,
+  );
+  throw err;
+}
 
 function db() {
   return {
@@ -53,11 +64,7 @@ async function selectCharacter(source, characterId) {
   if (exports.sync_sessions.setSessionCharacter) {
     await exports.sync_sessions.setSessionCharacter(ctx.sessionId, ch.id);
   }
-  emit('sync:characters:selected', {
-    source: Number(source),
-    character: ch,
-    accountId: ctx.accountId,
-  });
+  emit('sync:characters:selected', { source: Number(source), character: ch, accountId: ctx.accountId });
   emitNet('sync:characters:selected', source, ch);
   await exports.sync_spawn.spawnCharacter(source, ch.id);
   console.log(
@@ -77,11 +84,7 @@ onNet('sync:characters:list', async () => {
   try {
     const ctx = requireCtx(src);
     const list = await listByAccount(ctx.accountId);
-    emitNet('sync:characters:listResult', src, {
-      ok: true,
-      characters: list,
-      maxSlots: maxSlots(),
-    });
+    emitNet('sync:characters:listResult', src, { ok: true, characters: list, maxSlots: maxSlots() });
   } catch (err) {
     emitNet('sync:characters:listResult', src, {
       ok: false,

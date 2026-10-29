@@ -4,17 +4,14 @@ game 'gta5'
 name 'sync_characters'
 author 'SyncRP'
 description 'SyncCore characters create/select'
-version '0.2.0'
+version '0.2.1'
 
 node_version '22'
 
 server_script 'server/main.js'
-client_script 'client/main.js'
+client_script 'client/main.lua'
 
-dependencies {
-    'sync_db',
-    'sync_core',
-    'sync_sessions',
-    '/server:12913',
-}
--- sync_spawn is called at select-time; ensure it after sync_characters in server.cfg
+dependency 'sync_db'
+dependency 'sync_core'
+dependency 'sync_sessions'
+dependency '/server:12913'

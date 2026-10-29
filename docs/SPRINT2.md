@@ -48,10 +48,44 @@ ensure sync_spawn
 6. `sessions.character_id` заполнен после select
 7. `/chardelete <id>` — soft delete (`deleted_at` не NULL); нельзя удалить активного
 
+## Если `Couldn't start resource sync_characters`
+
+1. Проверьте, что папка **скопирована** (не junction):
+
+```powershell
+dir F:\SyncRP2.0\sync\resources\sync_characters
+dir F:\SyncRP2.0\sync\resources\sync_characters\lib
+dir F:\SyncRP2.0\sync\resources\sync_characters\client
+```
+
+Должны быть `fxmanifest.lua`, `server\main.js`, `client\main.lua`, `lib\*.js`.
+
+2. В `server.cfg` порядок:
+
+```cfg
+ensure sync_db
+ensure sync_identity
+ensure sync_sessions
+ensure sync_core
+ensure sync_characters
+ensure sync_spawn
+```
+
+3. В консоли txAdmin после старта:
+
+```
+refresh
+ensure sync_characters
+```
+
+Пришлите **все** строки с `sync_characters` / `Error` / `Failed` / `dependency` — одной фразы `Couldn't start` мало.
+
+4. Client теперь **Lua** (`client/main.lua`), не JS — после `git pull` обязательно снова `xcopy` sync_characters и sync_spawn.
+
 ## DoD
 
-- [ ] migrate 002 applied
-- [ ] create/list/select/soft-delete работают
-- [ ] spawn после select
-- [ ] unit validate tests green
-- [ ] PO smoke в комментарии PR
+- [ ] migrate 002 applied  
+- [ ] create/list/select/soft-delete работают  
+- [ ] spawn после select  
+- [ ] unit validate tests green  
+- [ ] PO smoke в комментарии PR  
