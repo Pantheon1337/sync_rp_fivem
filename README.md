@@ -59,7 +59,7 @@ npm run lint
 npm test
 ```
 
-FXServer в этом Cloud Agent окружении, как правило, **недоступен**. Не заявляйте прохождение FiveM integration-тестов без реального FXServer.
+**Разделение сред:** Cloud Agent / GitHub Actions — lint и unit. **FXServer развёрнут на отдельной машине PO:** оттуда `git pull` из GitHub и ручное FiveM-тестирование (см. [docs/TESTING.md](docs/TESTING.md)). Не заявляйте FiveM E2E по прогону только в Cloud Agent.
 
 ## Принципы
 

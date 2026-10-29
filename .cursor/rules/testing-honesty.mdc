@@ -11,5 +11,5 @@ globs:
 - Prefer Vitest for pure JS and DB integration tests with MariaDB Docker.
 - Playwright is for NUI after Stage 3 exists.
 - Never write fake domain tests (`expect(true).toBe(true)`) to satisfy DoD.
-- If FXServer is unavailable, document `SKIPPED: no FXServer` — do not claim FiveM E2E passed.
+- FXServer runs on a **separate PO/dev machine** (git pull from GitHub). Cloud Agent/CI must not claim FiveM E2E; note that FX smoke is for the PO machine.
 - See `docs/TESTING.md` and sprint test catalogs.

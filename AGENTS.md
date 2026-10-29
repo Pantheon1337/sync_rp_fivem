@@ -48,8 +48,9 @@
 - CI: lint + unit (Vitest). Playwright/NUI — когда появится UI.
 - Не мержить Stage N+1, пока PO не закрыл DoD текущего этапа.
 
-## Окружение Cloud Agent
+## Окружения
 
-- FXServer часто отсутствует → unit/schema/lint только.
-- Docker MariaDB — предпочтительный локальный путь для Stage 1 prep.
+- **Cloud Agent / CI:** lint, Prettier, Vitest (unit; DB — если Docker доступен). FXServer **не** запускается здесь.
+- **Машина PO с FXServer:** `git pull` из GitHub → FXServer + MariaDB → manual/smoke FiveM. Агент не закрывает FX-DoD без подтверждения PO.
+- Docker MariaDB — для Stage 1 prep (Agent и/или FX-машина).
 - Не коммитить `node_modules/`, артефакты сборки NUI, `.env`.

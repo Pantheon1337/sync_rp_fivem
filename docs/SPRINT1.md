@@ -37,9 +37,12 @@
 4. `sync_sessions` — open on connect, close on drop.
 5. `sync_core` — wire playerConnecting/playerJoined/playerDropped; `getContext`.
 6. Tests + docs touch (ARCHITECTURE note «implemented»).
-7. Manual FX smoke **если** FXServer есть; иначе зафиксировать skip.
+7. Cloud Agent / CI: lint + Vitest (+ DB integration при Docker). **FX smoke не в Agent.**
+8. PO на отдельной машине: `git pull` → FXServer + MariaDB → manual F1–F4; результат в PR.
 
 **Ensure order:** `yarn` (optional) → `sync_db` → `sync_identity` → `sync_sessions` → `sync_core`.
+
+**Где что гоняется:** unit/DB — Agent/CI; FiveM — только FX-машина PO (см. [TESTING.md](./TESTING.md)).
 
 ---
 
@@ -100,18 +103,19 @@
 - [ ] Connect создаёт/резолвит account + opens session
 - [ ] Disconnect закрывает session
 - [ ] `exports.sync_core.getContext` возвращает данные для online source
-- [ ] U1–U5 green; D1–D6 green при доступной БД
-- [ ] F1–F3 выполнены **или** явно `SKIPPED: no FXServer` в отчёте спринта
+- [ ] U1–U5 green в Agent/CI; D1–D6 green при доступной MariaDB (Agent Docker или FX-машина)
+- [ ] F1–F3 прогнаны PO на отдельной FX-машине после `git pull` (агент не закрывает FX-DoD сам)
 - [ ] Нет секретов в git; `.env.example` обновлён
 - [ ] MODULE_CONTRACTS не нарушены
 
 ## Риски
 
-| Risk                               | Mitigation                                             |
-| ---------------------------------- | ------------------------------------------------------ |
-| Node 22 vs host FX build           | Document min build; fallback note Node 16 only with PO |
-| Identifier merge edge cases        | D4 + PO policy «no auto-merge discord-only»            |
-| Cloud CI without Docker privileges | Unit-only gate; DB tests local                         |
+| Risk                               | Mitigation                                              |
+| ---------------------------------- | ------------------------------------------------------- |
+| Node 22 vs host FX build           | Document min build; fallback note Node 16 only with PO  |
+| Identifier merge edge cases        | D4 + PO policy «no auto-merge discord-only»             |
+| Cloud CI without Docker privileges | Unit-only gate; DB tests на FX-машине или local Docker  |
+| FX только на машине PO             | Agent сдаёт код+unit; FX checklist — ответственность PO |
 
 ## Оценка объёма (техническая, не календарная)
 
