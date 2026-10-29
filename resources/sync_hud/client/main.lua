@@ -1,5 +1,9 @@
 local hudVisible = true
 local variant = GetConvar('sync_hud_variant', 'classic')
+local hunger = 100
+local thirst = 100
+local cash = 0
+local bank = 0
 
 local function streetNames()
   local ped = PlayerPedId()
@@ -10,17 +14,23 @@ local function streetNames()
   return street, crossing
 end
 
+--- Keep native GTA health / armour / radar; only hide cash/wanted if we draw our own later.
+local function ensureNativeVitalHud()
+  -- Do not hide HUD components 3 (cash) aggressively; GTA health/armour bars stay.
+  DisplayRadar(true)
+end
+
 local function pushHud(extra)
   local street, crossing = streetNames()
-  local ped = PlayerPedId()
-  local health = math.max(0, GetEntityHealth(ped) - 100)
-  if health > 100 then health = 100 end
   local payload = {
     visible = hudVisible,
     variant = variant,
     street = street ~= '' and street or 'Лос-Сантос',
     crossing = crossing ~= '' and crossing or '—',
-    health = health,
+    cash = cash,
+    bank = bank,
+    hunger = hunger,
+    thirst = thirst,
     talking = NetworkIsPlayerTalking(PlayerId()) == true or NetworkIsPlayerTalking(PlayerId()) == 1,
     playerId = GetPlayerServerId(PlayerId()),
     online = #GetActivePlayers(),
@@ -37,10 +47,17 @@ end
 
 RegisterNetEvent('sync:economy:balances', function(data)
   if type(data) ~= 'table' then return end
-  pushHud({
-    cash = tonumber(data.cash) or 0,
-    bank = tonumber(data.bank) or 0,
-  })
+  cash = tonumber(data.cash) or cash
+  bank = tonumber(data.bank) or bank
+  pushHud({ cash = cash, bank = bank })
+end)
+
+--- Future needs module can push these; Stage 4 keeps local stub values.
+RegisterNetEvent('sync:hud:needs', function(data)
+  if type(data) ~= 'table' then return end
+  if data.hunger ~= nil then hunger = math.max(0, math.min(100, tonumber(data.hunger) or hunger)) end
+  if data.thirst ~= nil then thirst = math.max(0, math.min(100, tonumber(data.thirst) or thirst)) end
+  pushHud({ hunger = hunger, thirst = thirst })
 end)
 
 RegisterNetEvent('sync:hud:setVisible', function(state)
@@ -50,6 +67,7 @@ end)
 
 RegisterNetEvent('sync:characters:selected', function()
   hudVisible = true
+  ensureNativeVitalHud()
   TriggerServerEvent('sync:economy:getBalances')
   pushHud()
 end)
@@ -61,14 +79,16 @@ end, false)
 
 CreateThread(function()
   SetNuiFocus(false, false)
+  ensureNativeVitalHud()
   Wait(1500)
   pushHud()
   while true do
-    Wait(1000)
+    Wait(750)
     if hudVisible then
+      ensureNativeVitalHud()
       pushHud()
     end
   end
 end)
 
-print('[sync_hud] client loaded')
+print('[sync_hud] client loaded — top-right street/money/mic; needs @ minimap; HP native')

@@ -10,7 +10,7 @@
 | `sync_economy` | `economy_accounts` + `economy_ledger`; credit/debit/transfer + idempotency |
 | Money unit | **BIGINT целые рубли (₽)** |
 | Миграция | `003_economy_ledger.sql` (APPLY); seed из `characters.cash/bank` один раз |
-| `sync_hud` | Классический HUD по макету (+ minimal / server variants) |
+| `sync_hud` | Сверху справа: улица + cash/bank + mic (без чёрной плиты CEF). Голод/жажда — кольца над миникартой. HP — нативный GTA. |
 | `sync_bank` | NUI банк: Счета / Перевод / История; F6 или `/bank` |
 
 ## Поток
