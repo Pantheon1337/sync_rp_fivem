@@ -1,0 +1,16 @@
+# Stub for Stage 3+: Playwright against built NUI.
+# Disabled until nui/ app and tests exist. Do not enable as a green no-op.
+
+name: NUI Playwright
+
+on:
+  workflow_dispatch:
+
+jobs:
+  playwright:
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Placeholder
+        run: echo "Enable in Stage 3 with real NUI tests (playwright@1.64.1 planned)"

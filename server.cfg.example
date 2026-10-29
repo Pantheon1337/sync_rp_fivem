@@ -1,0 +1,31 @@
+# SyncRP FXServer example — Stage 1
+# Copy to your server-data as server.cfg (do NOT commit real secrets).
+
+endpoint_add_tcp "0.0.0.0:30120"
+endpoint_add_udp "0.0.0.0:30120"
+
+sv_hostname "SyncRP Dev"
+sets sv_projectName "SyncRP"
+sets locale "ru-RU"
+sv_maxclients 32
+
+set onesync on
+
+# MariaDB — match docker/.env (never commit real password)
+set sync_db_dsn "mysql://syncrp:changeme@127.0.0.1:3306/syncrp"
+
+# Optional: pepper for hashing player endpoints in sessions
+set sync_endpoint_pepper "change-me-long-random"
+
+# Point these at the git checkout resources folder, e.g.:
+# ensure [path-to]/ied or linked resources]
+# If server-data/resources/[sync] is a symlink/copy of repo resources/:
+
+ensure sync_db
+ensure sync_identity
+ensure sync_sessions
+ensure sync_core
+
+# sv_licenseKey "CHANGEME"
+
+# Min FXServer build: 12913+ (Node 22)

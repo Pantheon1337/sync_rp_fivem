@@ -1,0 +1,18 @@
+node_modules/
+dist/
+build/
+.cache/
+coverage/
+.env
+.env.*
+!.env.example
+docker/.env
+*.log
+.DS_Store
+playwright-report/
+test-results/
+.fxserver/
+cache/
+# FiveM / local server artifacts
+server.cfg
+!server.cfg.example

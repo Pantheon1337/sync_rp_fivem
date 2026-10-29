@@ -1,0 +1,19 @@
+---
+description: SyncRP SyncCore architecture — mandatory for all agents
+globs:
+alwaysApply: true
+---
+
+# SyncCore architecture
+
+- Foundation is **SyncCore only**. Do not introduce QBCore, ESX, Qbox, or ox_core as a base framework.
+- Game logic runs on **FXServer**. Do not route every mechanic through an external HTTP API.
+- Stack: JavaScript (server + client), MariaDB/InnoDB, React+Vite+Tailwind+Zustand for NUI (Stage 3+). TypeScript only if Product Owner Pantheon Ai explicitly approved.
+- Read `docs/ARCHITECTURE.md`, `docs/MODULE_CONTRACTS.md`, `docs/DATABASE.md`, `AGENTS.md` before implementing features.
+- Respect stage boundaries in `docs/ROADMAP.md`. Do not start Stage N+1 work without PO confirmation of Stage N.
+- Resource names: `sync_<domain>`. Events: `sync:<domain>:<action>`. One data owner per table.
+- Server authority: never trust client for money, items, permissions, or plate allocation.
+- Russian UI default. Visuals: dark glass + blue accents per `docs/UI_DESIGN_SYSTEM.md` — no purple/cream AI default themes.
+- No secrets in git. No stub business logic presented as finished. No copying Majestic/GTA5RP closed assets.
+- FiveM JS: use `node_version '22'` when targeting Node 22; after Node async I/O call natives/`emitNet` inside `setImmediate`.
+- Do not claim FXServer integration tests passed unless FXServer actually ran.
