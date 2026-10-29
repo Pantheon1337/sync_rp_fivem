@@ -3,6 +3,16 @@
   "interactRadius": 2.2,
   "serverRadius": 3.5,
   "drawDistance": 25.0,
+  "blip": {
+    "_ref": "https://docs.fivem.net/docs/game-references/blips/ — 605 radar_nhp_starterpack",
+    "sprite": 605,
+    "colour": 2,
+    "scaleBank": 0.85,
+    "scaleAtm": 0.65,
+    "shortRange": true,
+    "showBanks": true,
+    "showAtms": true
+  },
   "atmModels": [
     "prop_atm_01",
     "prop_atm_02",
