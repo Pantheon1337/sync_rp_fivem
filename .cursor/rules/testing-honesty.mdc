@@ -1,0 +1,15 @@
+---
+description: Honest testing claims for SyncRP
+globs:
+  - "**/*.{test,spec}.{js,mjs,cjs}"
+  - docs/TESTING.md
+  - .github/**/*
+---
+
+# Testing honesty
+
+- Prefer Vitest for pure JS and DB integration tests with MariaDB Docker.
+- Playwright is for NUI after Stage 3 exists.
+- Never write fake domain tests (`expect(true).toBe(true)`) to satisfy DoD.
+- If FXServer is unavailable, document `SKIPPED: no FXServer` — do not claim FiveM E2E passed.
+- See `docs/TESTING.md` and sprint test catalogs.
