@@ -1,0 +1,111 @@
+# Sprint 3 — NUI shell + character UI
+
+**Вход:** Stage 2 smoke (create/select) OK.  
+**Ветка:** `cursor/stage-3-nui-characters-5b89`
+
+## Scope
+
+| Item | |
+|------|--|
+| `nui/` | React + Vite + Tailwind + Zustand |
+| `sync_nui` | ui_page + NUI bridge, RU, dark glass + blue |
+| Character UI | list / create / select / delete |
+| Auth UX | license → account → регистрация/вход персонажа (без email/пароля) |
+| Appearance | плиточный редактор (лицо/волосы/одежда/props) + SyncRP scrollbar |
+| Chat | `sync_chat` — прозрачный оверлей как stock FiveM; вкладки фракции/семьи только по членству |
+| Position | autosave + flush в `characters.position_*` на disconnect |
+| Chat commands | fallback персонажей: `/chars`, `/charsui` |
+
+## Поток игрока
+
+1. `playerConnecting` — SyncCore проверяет/создаёт `accounts` + `account_identifiers` по FiveM identifiers (license и др.).
+2. `playerJoining` — открывается `sessions`, `sync:core:playerRegistered`.
+3. `sync_nui` **сам** открывает NUI (nudge до ack; ждать session + loading screen):
+   - новый аккаунт → **Регистрация персонажа**;
+   - есть персонажи → **Вход в город**.
+4. Create → INSERT → **редактор внешности** (лицо / волосы / одежда / props) → `appearance_json` → select + spawn.
+5. Select без внешности → снова редактор; с внешностью → spawn freemode + apply.
+6. В мире: coords каждые 30с; на disconnect позиция в БД.
+
+Миграция: `005_character_appearance.sql` (`appearance_json`).
+
+## Build NUI
+
+```powershell
+cd F:\SyncRP2.0\sync_rp_fivem\nui
+npm.cmd ci
+npm.cmd run build
+# артефакты → resources\sync_nui\html\
+```
+
+## Deploy на FX
+
+```powershell
+cd F:\SyncRP2.0\sync_rp_fivem
+git pull origin cursor/stage-3-nui-characters-5b89
+$env:SYNC_DB_DSN="mysql://syncrp:ВАШ_ПАРОЛЬ@127.0.0.1:3306/syncrp"
+npm.cmd run migrate
+cd nui && npm.cmd ci && npm.cmd run build && cd ..
+
+xcopy /E /I /Y resources\sync_nui        F:\SyncRP2.0\sync\resources\sync_nui
+xcopy /E /I /Y resources\sync_characters F:\SyncRP2.0\sync\resources\sync_characters
+xcopy /E /I /Y resources\sync_spawn      F:\SyncRP2.0\sync\resources\sync_spawn
+xcopy /E /I /Y resources\sync_chat       F:\SyncRP2.0\sync\resources\sync_chat
+```
+
+В `server.cfg` после `sync_nui`:
+
+```cfg
+ensure sync_nui
+ensure sync_chat
+```
+
+Чат: клавиша **T**. Если мешает стандартный `chat` из cfx — закомментируйте `ensure chat`.
+
+Полный рестарт FXServer.
+
+## PO test
+
+1. `connect 127.0.0.1:30120`
+2. Первый заход (новый license): NUI **Регистрация** → создать персонажа → сразу спавн
+3. Проверка БД:
+   ```sql
+   SELECT id, first_name, last_name, slot FROM characters;
+   SELECT id, account_id, character_id FROM sessions ORDER BY id DESC LIMIT 3;
+   ```
+4. Походить, отключиться, снова зайти → **Вход** → выбрать → спавн у сохранённой позиции (`position_x/y/z` не NULL)
+5. Модель видна (hipster ped)
+6. Fallback: `/charsui` снова открывает UI (после входа можно закрыть)
+
+## Нет меню NUI (только chat про fallback)
+
+Сообщение в чате про `/chars` шлёт **`sync_characters`**, не NUI. Если меню нет:
+
+1. В `server.cfg` после `sync_spawn` должно быть: `ensure sync_nui`
+2. В консоли FX при старте: `Started resource sync_nui` и `[sync_nui] loaded`
+3. Скопировать ресурс + html:
+   ```powershell
+   cd F:\SyncRP2.0\sync_rp_fivem
+   git pull origin cursor/stage-3-nui-characters-5b89
+   cd nui && npm.cmd ci && npm.cmd run build && cd ..
+   xcopy /E /I /Y resources\sync_nui F:\SyncRP2.0\sync\resources\sync_nui
+   ```
+4. Рестарт FX → в игре F8: строки `[sync_nui] clientReady` / `openCharacters`
+5. Сразу попробовать: `/charsui` — если и это пусто, `sync_nui` не запущен или нет `html\index.html`
+
+## Playwright (host)
+
+```powershell
+cd nui
+npm.cmd run build
+npm.cmd run test:e2e
+```
+
+## DoD
+
+- [x] NUI build в `sync_nui/html`
+- [x] Character flow через NUI (регистрация / вход)
+- [x] Design tokens SyncRP (dark glass + blue)
+- [x] Position save on disconnect + periodic
+- [x] Playwright smoke green
+- [ ] PO smoke comment on PR

@@ -1,0 +1,49 @@
+# SyncRP FXServer example — Stage 4
+# Copy to your server-data as server.cfg (do NOT commit real secrets).
+
+endpoint_add_tcp "0.0.0.0:30120"
+endpoint_add_udp "0.0.0.0:30120"
+
+sv_hostname "SyncRP Dev"
+sets sv_projectName "SyncRP"
+sets locale "ru-RU"
+sv_maxclients 32
+
+set onesync on
+
+# MariaDB — match docker/.env (never commit real password)
+set sync_db_dsn "mysql://syncrp:changeme@127.0.0.1:3306/syncrp"
+
+# Optional: pepper for hashing player endpoints in sessions
+set sync_endpoint_pepper "change-me-long-random"
+
+# Character slots per account (Stage 2)
+setr sync_character_slots 3
+
+# Copy resources from git into server-data/resources/ (no junctions — FiveM sandbox)
+
+ensure sync_db
+ensure sync_identity
+ensure sync_sessions
+ensure sync_core
+ensure sync_characters
+ensure sync_spawn
+ensure sync_nui
+ensure sync_chat
+ensure sync_economy
+ensure sync_hud
+ensure sync_bank
+
+# HUD variant: classic | minimal | server
+setr sync_hud_variant "classic"
+setr sync_server_id 1
+
+# Bank: 1 = allow F6/UI anywhere (dev only). Default 0 = must be at bank/ATM.
+setr sync_bank_allow_remote 0
+
+# Optional: disable default cfx chat UI if present
+# ensure chat
+
+# sv_licenseKey "CHANGEME"
+
+# Min FXServer build: 12913+ (Node 22)
