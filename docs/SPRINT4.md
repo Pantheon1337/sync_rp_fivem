@@ -10,7 +10,7 @@
 | `sync_economy` | `economy_accounts` + `economy_ledger`; credit/debit/transfer + idempotency |
 | Money unit | **BIGINT целые рубли (₽)** |
 | Миграция | `003_economy_ledger.sql` (APPLY); seed из `characters.cash/bank` один раз |
-| `sync_hud` | Сверху справа: улица + cash/bank + mic (без чёрной плиты CEF). Голод/жажда — кольца над миникартой. HP — нативный GTA. |
+| `sync_hud` | Сверху справа: улица + cash/bank (без чёрной плиты CEF). Голод/жажда — кольца правее миникарты (burger / droplet); mic только при talk. HP — нативный GTA. |
 | `sync_bank` | NUI банк: Счета / Перевод / История; мир: Fleeca/Pacific + ATM (E); F6 только у точки |
 | Locations | `config/locations.json` — паттерн branch points + ATM models/coords (см. [BANKS.md](./BANKS.md)) |
 | Bank account # | UI stub `**** ----` — **не рандом**. Постоянный номер счёта → Stage 16 |
