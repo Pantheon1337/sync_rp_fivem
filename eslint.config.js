@@ -11,8 +11,9 @@ export default [
       'nui/dist/**',
       '**/dist/**',
       'package-lock.json',
-      // FiveM server entrypoints use Citizen globals; lint pure lib/ instead
+      // FiveM entrypoints use Citizen globals; lint pure lib/ instead
       'resources/**/server/**',
+      'resources/**/client/**',
       'scripts/migrate.cjs',
     ],
   },

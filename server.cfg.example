@@ -1,4 +1,4 @@
-# SyncRP FXServer example — Stage 1
+# SyncRP FXServer example — Stage 2
 # Copy to your server-data as server.cfg (do NOT commit real secrets).
 
 endpoint_add_tcp "0.0.0.0:30120"
@@ -17,14 +17,17 @@ set sync_db_dsn "mysql://syncrp:changeme@127.0.0.1:3306/syncrp"
 # Optional: pepper for hashing player endpoints in sessions
 set sync_endpoint_pepper "change-me-long-random"
 
-# Point these at the git checkout resources folder, e.g.:
-# ensure [path-to]/ied or linked resources]
-# If server-data/resources/[sync] is a symlink/copy of repo resources/:
+# Character slots per account (Stage 2)
+setr sync_character_slots 3
+
+# Copy resources from git into server-data/resources/ (no junctions — FiveM sandbox)
 
 ensure sync_db
 ensure sync_identity
 ensure sync_sessions
 ensure sync_core
+ensure sync_characters
+ensure sync_spawn
 
 # sv_licenseKey "CHANGEME"
 

@@ -42,8 +42,7 @@ async function assertAccount(source) {
 
 async function registerPlayer(source) {
   const resolved = await assertAccount(source);
-  const endpoint =
-    typeof GetPlayerEndpoint === 'function' ? GetPlayerEndpoint(String(source)) : '';
+  const endpoint = typeof GetPlayerEndpoint === 'function' ? GetPlayerEndpoint(String(source)) : '';
   const session = await exports.sync_sessions.openSession(
     resolved.accountId,
     Number(source),
@@ -133,6 +132,15 @@ on('playerDropped', (reason) => {
 
 exports('getContext', (source) => registry.get(source));
 exports('setCharacter', (source, characterId) => registry.setCharacter(source, characterId));
+exports('requireCharacter', (source) => {
+  const ctx = registry.get(source);
+  if (!ctx || ctx.characterId == null) {
+    const err = new Error('sync_core: персонаж не выбран');
+    err.code = 'NO_CHARACTER';
+    throw err;
+  }
+  return ctx;
+});
 exports('isReady', () => bootOk && exports.sync_db.isReady());
 exports('onPlayerReady', (cb) => {
   on('sync:core:playerRegistered', cb);

@@ -1,10 +1,9 @@
 -- SyncRP migration 002 — characters
--- Status: STAGE 0 PLACEHOLDER. Implement DDL in Stage 2.
+-- Stage 2 — APPLY THIS FILE
 -- Owner: sync_characters
 -- See docs/DATABASE.md
 
-/*
-CREATE TABLE characters (
+CREATE TABLE IF NOT EXISTS characters (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   uuid CHAR(36) NOT NULL,
   account_id BIGINT UNSIGNED NOT NULL,
@@ -29,4 +28,3 @@ CREATE TABLE characters (
   CONSTRAINT fk_characters_account
     FOREIGN KEY (account_id) REFERENCES accounts (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-*/

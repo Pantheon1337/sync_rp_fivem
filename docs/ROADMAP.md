@@ -48,11 +48,12 @@ PO: Pantheon Ai. Следующий этап не стартует без под
 
 ---
 
-## Stage 2 — Characters & spawn
+## Stage 2 — Characters & spawn _(in progress)_
 
-**Depends:** Stage 1.  
-**Scope:** `sync_characters`, `sync_spawn`; character select flow; slot limits.  
-**DoD:** create/select/soft-delete; без select доменные действия блокируются; миграция characters.
+**Depends:** Stage 1 (FX F1–F3 OK).  
+**Scope:** `sync_characters`, `sync_spawn`; character select flow; slot limits; chat UX до Stage 3 NUI.  
+**DoD:** create/select/soft-delete; `sync_core.requireCharacter`; миграция 002; PO smoke.  
+**Детали:** [SPRINT2.md](./SPRINT2.md).
 
 ---
 

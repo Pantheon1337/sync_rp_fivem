@@ -7,7 +7,9 @@ const { randomUUID } = require('node:crypto');
 function loadIdentifiers() {
   const g = globalThis;
   if (typeof g.GetResourcePath === 'function' && typeof g.GetCurrentResourceName === 'function') {
-    return require(path.join(g.GetResourcePath(g.GetCurrentResourceName()), 'lib', 'identifiers.js'));
+    return require(
+      path.join(g.GetResourcePath(g.GetCurrentResourceName()), 'lib', 'identifiers.js'),
+    );
   }
   return require('./identifiers.js');
 }

@@ -1,31 +1,26 @@
 # FiveM resources (SyncRP)
 
-## Stage 1 (реализовано)
+## Stage 1
 
-| Resource        | Роль                                  |
-| --------------- | ------------------------------------- |
-| `sync_db`       | MariaDB pool, `query` / `transaction` |
-| `sync_identity` | accounts + identifiers                |
-| `sync_sessions` | sessions open/close                   |
-| `sync_core`     | connect/drop lifecycle, `getContext`  |
+| Resource        | Роль                           |
+| --------------- | ------------------------------ |
+| `sync_db`       | MariaDB pool                   |
+| `sync_identity` | accounts + identifiers         |
+| `sync_sessions` | sessions                       |
+| `sync_core`     | lifecycle + `requireCharacter` |
 
-**Ensure order:** `sync_db` → `sync_identity` → `sync_sessions` → `sync_core`.
+## Stage 2
 
-Перед первым стартом на FX-машине:
+| Resource          | Роль                                             |
+| ----------------- | ------------------------------------------------ |
+| `sync_characters` | create/list/select/soft-delete (+ chat commands) |
+| `sync_spawn`      | spawn after select                               |
 
-```bash
-# из корня репо
-npm ci && npm run migrate   # нужен SYNC_DB_DSN
-cd resources/sync_db && npm ci && cd ../..
-```
+**Ensure order:**  
+`sync_db` → `sync_identity` → `sync_sessions` → `sync_core` → `sync_characters` → `sync_spawn`
 
-Скопируйте или симлинкуйте эти папки в `server-data/resources/`.
-
-Контракты: `docs/MODULE_CONTRACTS.md`.  
-FX checklist: `docs/FXSERVER_TEST_RUNBOOK.md`.
+Копируйте ресурсы **внутрь** `server-data/resources/` (не junction — sandbox FiveM).
 
 ## Далее
 
-`sync_characters` (Stage 2), `sync_nui` (3), `sync_economy` (4), …
-
-Не добавлять QBCore/ESX/Qbox.
+`sync_nui` (Stage 3), `sync_economy` (4), …

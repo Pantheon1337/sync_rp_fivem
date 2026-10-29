@@ -10,8 +10,7 @@ const { parseDsn } = require(path.join(root, 'lib', 'parseDsn.js'));
 let pool = null;
 
 function resolveDsn() {
-  const fromConvar =
-    typeof GetConvar === 'function' ? GetConvar('sync_db_dsn', '') : '';
+  const fromConvar = typeof GetConvar === 'function' ? GetConvar('sync_db_dsn', '') : '';
   return fromConvar || process.env.SYNC_DB_DSN || '';
 }
 

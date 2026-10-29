@@ -56,7 +56,12 @@ async function closeSession(serverId, reason, accountId) {
   await exports.sync_db.query(
     `UPDATE sessions SET disconnected_at = UTC_TIMESTAMP(3), disconnect_reason = ?
      WHERE disconnected_at IS NULL AND (id = ? OR (? IS NOT NULL AND account_id = ?))`,
-    [why, mem.sessionId, accountId != null ? accountId : mem.accountId, accountId != null ? accountId : mem.accountId],
+    [
+      why,
+      mem.sessionId,
+      accountId != null ? accountId : mem.accountId,
+      accountId != null ? accountId : mem.accountId,
+    ],
   );
   emit('sync:sessions:closed', {
     sessionId: mem.sessionId,
@@ -71,12 +76,21 @@ function getActiveBySource(serverId) {
   return tracker.get(serverId);
 }
 
+async function setSessionCharacter(sessionId, characterId) {
+  await exports.sync_db.query(`UPDATE sessions SET character_id = ? WHERE id = ?`, [
+    characterId,
+    sessionId,
+  ]);
+  return true;
+}
+
 exports('openSession', (accountId, serverId, endpoint) =>
   openSession(accountId, serverId, endpoint),
 );
-exports('closeSession', (serverId, reason, accountId) =>
-  closeSession(serverId, reason, accountId),
-);
+exports('closeSession', (serverId, reason, accountId) => closeSession(serverId, reason, accountId));
 exports('getActiveBySource', (serverId) => getActiveBySource(serverId));
+exports('setSessionCharacter', (sessionId, characterId) =>
+  setSessionCharacter(sessionId, characterId),
+);
 
 console.log('[sync_sessions] loaded');

@@ -192,17 +192,37 @@ WHERE disconnected_at IS NULL;
 
 ## Если что-то сломалось
 
-| Проблема                    | Что проверить                                  |
-| --------------------------- | ---------------------------------------------- |
-| Docker не стартует          | Docker Desktop Running; WSL2 backend           |
-| `migrate` ECONNREFUSED      | контейнер up? порт 3306 свободен?              |
-| Access denied               | пароль в DSN = `SYNC_DB_PASSWORD` в `.env`     |
-| Resource not found          | junction/копия в `sync\resources`              |
-| Cannot find module './pool' | `git pull` (загрузка через GetResourcePath); restart |
-| Node / mysql2 missing       | `cd resources\sync_db && npm.cmd ci`           |
-| Node 22 / runtime error     | FXServer build ≥ 12913                         |
-| Couldn't find resource hardcap | убрать `ensure hardcap` из server.cfg       |
-| Зашли, но нет персонажа/NUI | нормально для Stage 1 — только account/session |
+| Проблема                       | Что проверить                                                  |
+| ------------------------------ | -------------------------------------------------------------- |
+| Docker не стартует             | Docker Desktop Running; WSL2 backend                           |
+| `migrate` ECONNREFUSED         | контейнер up? порт 3306 свободен?                              |
+| Access denied                  | пароль в DSN = `SYNC_DB_PASSWORD` в `.env`                     |
+| Resource not found             | junction/копия в `sync\resources`                              |
+| Cannot find module './pool'    | `git pull` (загрузка через GetResourcePath); restart           |
+| Node / mysql2 missing          | `cd resources\sync_db && npm.cmd ci`                           |
+| Node 22 / runtime error        | FXServer build ≥ 12913                                         |
+| Couldn't find resource hardcap | убрать `ensure hardcap` из server.cfg                          |
+| Зашли, но нет персонажа/NUI    | Stage 1: ок. Stage 2: `/chars` / `/charcreate` / `/charselect` |
+
+---
+
+## Stage 2 — персонажи (кратко)
+
+Полный чеклист: [SPRINT2.md](./SPRINT2.md). Ветка: `cursor/stage-2-characters-spawn-5b89`.
+
+```powershell
+cd F:\SyncRP2.0\sync_rp_fivem
+git pull origin cursor/stage-2-characters-spawn-5b89
+$env:SYNC_DB_DSN="mysql://syncrp:ВАШ_ПАРОЛЬ@127.0.0.1:3306/syncrp"
+npm.cmd run migrate
+xcopy /E /I /Y resources\sync_characters F:\SyncRP2.0\sync\resources\sync_characters
+xcopy /E /I /Y resources\sync_spawn      F:\SyncRP2.0\sync\resources\sync_spawn
+xcopy /E /I /Y resources\sync_core       F:\SyncRP2.0\sync\resources\sync_core
+xcopy /E /I /Y resources\sync_sessions   F:\SyncRP2.0\sync\resources\sync_sessions
+```
+
+В `server.cfg`: `ensure sync_characters` и `ensure sync_spawn` (после `sync_core`).  
+В игре: `/charcreate Иван Петров male 1990-05-01` → `/charselect <id>`.
 
 ---
 
@@ -210,13 +230,9 @@ WHERE disconnected_at IS NULL;
 
 ```powershell
 cd F:\SyncRP2.0\sync_rp_fivem
-git pull origin cursor/stage-1-synccore-foundation-5b89
-# при новых миграциях:
+git pull
 $env:SYNC_DB_DSN="mysql://syncrp:ВАШ_ПАРОЛЬ@127.0.0.1:3306/syncrp"
-npm run migrate
-# если менялся package.json у sync_db:
-cd resources\sync_db; npm ci; cd ..\..
+npm.cmd run migrate
+# xcopy нужных sync_* в F:\SyncRP2.0\sync\resources\
 # перезапуск FXServer
 ```
-
-После `git pull` снова выполните `xcopy` из шага 4 (junction не используем).
