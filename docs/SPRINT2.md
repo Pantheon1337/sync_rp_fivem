@@ -48,6 +48,21 @@ ensure sync_spawn
 6. `sessions.character_id` заполнен после select
 7. `/chardelete <id>` — soft delete (`deleted_at` не NULL); нельзя удалить активного
 
+## Если клиент: `Couldn't start resource sync_spawn` (при connect)
+
+Частая причина: в `fxmanifest` ресурса с **client** скриптом стоял `dependency` на **server_only** (`sync_core` и т.п.). На клиенте такого ресурса нет → join падает.
+
+Исправлено в `0.2.2`: client-зависимости только на ресурсы с client. Порядок старта — только через `ensure` в `server.cfg`.
+
+После `git pull` обязательно:
+
+```powershell
+xcopy /E /I /Y resources\sync_characters F:\SyncRP2.0\sync\resources\sync_characters
+xcopy /E /I /Y resources\sync_spawn      F:\SyncRP2.0\sync\resources\sync_spawn
+```
+
+Полный рестарт FXServer (не только ensure) → снова `connect 127.0.0.1:30120`.
+
 ## Если `Couldn't start resource sync_characters`
 
 1. Проверьте, что папка **скопирована** (не junction):
