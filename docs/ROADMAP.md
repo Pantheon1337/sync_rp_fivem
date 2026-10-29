@@ -1,6 +1,6 @@
-# SyncRP Roadmap — Stages 0–15
+# SyncRP Roadmap — Stages 0–18
 
-PO: Pantheon Ai. Следующий этап не стартует без подтверждения DoD текущего (для Stage 0 — review этого PR).
+PO: Pantheon Ai. Следующий этап не стартует без подтверждения DoD текущего.
 
 ## Dependency graph (упрощённо)
 
@@ -8,69 +8,66 @@ PO: Pantheon Ai. Следующий этап не стартует без под
 0 Architecture
  └─ 1 SyncCore + DB + Identity + Sessions
       └─ 2 Characters + Spawn
-           └─ 3 NUI shell + RU locale
-                ├─ 4 Economy + ledger
+           └─ 3 NUI shell + RU locale ✓
+                ├─ 4 Economy + ledger + HUD/Bank UI   ← сейчас
                 │    ├─ 5 Inventory
-                │    └─ 8 Jobs (needs economy)
+                │    ├─ 8 Jobs (needs economy)
+                │    ├─ 16 Banks extended (cards, ATM, fees)
+                │    ├─ 17 Businesses
+                │    └─ 12 Housing / Real estate
                 └─ 6 Vehicles + RU plates
                      └─ 7 Garages
                           └─ 9 Admin + bans + audit
                                └─ 10 World / doors / interact
                                     └─ 11 Phone / apps skeleton
-                                         └─ 12 Housing
-                                              └─ 13 Crime / MDT lite
-                                                   └─ 14 Performance + hardening
-                                                        └─ 15 Launch readiness
+                                         └─ 13 Crime / MDT lite
+                                              └─ 14 Performance + hardening
+                                                   └─ 15 Launch readiness
+                                                        └─ 18 Content polish
 ```
 
 ---
 
-## Stage 0 — Planning & architecture _(этот этап)_
+## Stage 0 — Planning & architecture
 
-**Deliverables:** docs, Cursor rules, repo skeleton, docker MariaDB stub, Sprint 1 plan.  
-**DoD:**
-
-- [x] README, AGENTS, ARCHITECTURE, DATABASE, MODULE_CONTRACTS, SECURITY, ROADMAP, TESTING, UI_DESIGN_SYSTEM, SPRINT1
-- [x] `.cursor/rules/` для SyncCore
-- [x] Skeleton folders + minimal CI/docker
-- [x] PO подтвердил архитектуру → Stage 1
-
-**Не входит:** runtime SyncCore, gameplay.
+**DoD:** docs + skeleton + PO approve → ✓
 
 ---
 
 ## Stage 1 — SyncCore runtime foundation
 
-**Depends:** Stage 0 approved.  
-**Scope:** `sync_core`, `sync_db`, `sync_identity`, `sync_sessions`; migrations 001; connect/disconnect lifecycle; Vitest на pure helpers.  
-**DoD:** игрок коннектится → account+session в БД; disconnect закрывает session; lint/unit green; FXServer smoke **если** доступен (иначе честный skip в отчёте).  
-**Детали:** [SPRINT1.md](./SPRINT1.md).
+**DoD:** account+session в БД → ✓
 
 ---
 
 ## Stage 2 — Characters & spawn
 
-**Depends:** Stage 1 (FX F1–F3 OK).  
-**Scope:** `sync_characters`, `sync_spawn`; character select flow; slot limits; chat UX до Stage 3 NUI.  
-**DoD:** create/select/soft-delete; `sync_core.requireCharacter`; миграция 002; PO smoke.  
-**Детали:** [SPRINT2.md](./SPRINT2.md).
+**DoD:** create/select/soft-delete + spawn → ✓
 
 ---
 
-## Stage 3 — NUI shell *(in progress)*
+## Stage 3 — NUI shell ✓ _(PO: базовый функционал достаточен; полировка создания персонажа — позже)_
 
-**Depends:** Stage 2.  
-**Scope:** React+Vite+Tailwind+Zustand в `nui/`; `sync_nui`; RU; design tokens; registration/login gate; position save.  
-**DoD:** character UI через NUI; create/select → DB; position на disconnect; Playwright smoke; тема dark glass + blue.  
+**Scope:** React NUI, регистрация/вход, appearance tiles, chat overlay, position save.  
 **Детали:** [SPRINT3.md](./SPRINT3.md).
 
 ---
 
-## Stage 4 — Economy
+## Stage 4 — Economy + visuals _(in progress)_
 
-**Depends:** Stage 3 (UI optional для API-first, но UX желателен).  
-**Scope:** `sync_economy`; ledger; миграция балансов; idempotent transfer.  
-**DoD:** нельзя задюпать повторным event; audit ledger rows; server authority tests.
+**Depends:** Stage 3.  
+**Scope:**
+
+- `sync_economy` — `economy_accounts` + `economy_ledger`; credit/debit/transfer; idempotency
+- Деньги: **BIGINT целые рубли (₽)**
+- Seed балансов из `characters.cash/bank`
+- `sync_hud` — варианты: классический (RP), минималистичный, серверный (макеты PO)
+- `sync_bank` — NUI банк: Счета / Перевод / История (макет PO)
+
+**DoD:** нельзя задюпать повторным event; audit ledger; HUD виден после спавна; bank deposit/withdraw; unit tests.  
+**Детали:** [SPRINT4.md](./SPRINT4.md).
+
+**Референсы UI:** макеты HUD/банк в store `media/mockups/` (и вложения PO). Чужие закрытые ресурсы не копируем; смотрим паттерны (ledger, ATM flow, property deeds) как идеи, код — свой SyncCore.
 
 ---
 
@@ -78,7 +75,7 @@ PO: Pantheon Ai. Следующий этап не стартует без под
 
 **Depends:** Stage 4.  
 **Scope:** item defs, stacks, give/move server API.  
-**DoD:** no client trust; weight/slot rules documented + tested unit-level.
+**DoD:** no client trust; weight/slot rules + unit tests.
 
 ---
 
@@ -86,22 +83,22 @@ PO: Pantheon Ai. Следующий этап не стартует без под
 
 **Depends:** Stage 2 (+ economy если покупка).  
 **Scope:** `sync_vehicles`; plate generator RU; persist props.  
-**DoD:** allocate unique plate; spawn/despawn owned vehicle; DB stubs → real DDL.
+**DoD:** unique plate; spawn/despawn owned vehicle.
 
 ---
 
 ## Stage 7 — Garages
 
 **Depends:** Stage 6.  
-**Scope:** `sync_garages`; store/retrieve.  
-**DoD:** vehicle state consistent stored/out; exploit store-dupe covered.
+**Scope:** store/retrieve.  
+**DoD:** no store-dupe.
 
 ---
 
 ## Stage 8 — Jobs framework
 
 **Depends:** Stage 4.  
-**Scope:** job grades, duty, payday via economy.  
+**Scope:** grades, duty, payday via economy.  
 **DoD:** payday idempotent; job change audited.
 
 ---
@@ -109,39 +106,43 @@ PO: Pantheon Ai. Следующий этап не стартует без под
 ## Stage 9 — Admin
 
 **Depends:** Stage 1+ (practically 4+).  
-**Scope:** `sync_admin`; bans; audit log; ACE bridge.  
-**DoD:** money/item give only through domain exports + audit.
+**Scope:** bans; audit; ACE; money/item give only through domain exports + ledger.
 
 ---
 
 ## Stage 10 — World interaction
 
 **Depends:** Stage 3.  
-**Scope:** doors, zones, interact prompts (server-validated).  
-**DoD:** unauthorized open rejected.
+**Scope:** doors, zones, interact prompts (server-validated).
 
 ---
 
 ## Stage 11 — Phone skeleton
 
 **Depends:** Stage 3, 4.  
-**Scope:** phone NUI shell, 1–2 apps stub with real routing.  
-**DoD:** не stub-as-done; apps помечены scope.
+**Scope:** phone NUI shell, 1–2 apps with real routing.
 
 ---
 
-## Stage 12 — Housing
+## Stage 12 — Housing / Real estate
 
 **Depends:** Stage 4, 7, 10.  
-**Scope:** property ownership, stash link inventory.  
-**DoD:** ownership checks server-side.
+**Scope:**
+
+- Собственность (дом/квартира), ключи, stash → inventory
+- Покупка/продажа через economy ledger
+- Интерьер / вход (world interact)
+- Налог/коммуналка — later spike
+
+**DoD:** ownership checks server-side; нельзя войти чужим без ключа/ордера.  
+**Референс-идеи:** deed + key item, garage link, furniture stub — без клона чужих ассетов/логики.
 
 ---
 
 ## Stage 13 — Crime / MDT lite
 
 **Depends:** Stage 9, 8.  
-**Scope:** records, warrants lite — без копирования чужих закрытых MDT.  
+**Scope:** records, warrants lite.  
 **DoD:** RBAC на просмотр.
 
 ---
@@ -149,16 +150,50 @@ PO: Pantheon Ai. Следующий этап не стартует без под
 ## Stage 14 — Performance & hardening
 
 **Depends:** core domains present.  
-**Scope:** profiling, index review, rate limits, backup runbooks.  
-**DoD:** documented budgets; no critical dupe CVEs open.
+**Scope:** profiling, indexes, rate limits, backups.
 
 ---
 
 ## Stage 15 — Launch readiness
 
 **Depends:** PO feature freeze.  
-**Scope:** checklist, ops docs, monitoring hooks, legal/license keys process (out of repo).  
 **DoD:** PO sign-off production.
+
+---
+
+## Stage 16 — Banks extended
+
+**Depends:** Stage 4 (базовый банк уже в Stage 4).  
+**Scope:**
+
+- ATM точки в мире (interact)
+- Карты / маскированный номер (UI уже есть stub)
+- Комиссии, лимиты снятия, переводы игроку↔игроку
+- Вклады / сейфы (optional)
+
+**DoD:** все движения только через ledger; ATM exploit covered.
+
+---
+
+## Stage 17 — Businesses
+
+**Depends:** Stage 4, 8, 10 (+ 5 inventory для товара).  
+**Scope:**
+
+- Типы бизнесов (магазин, автосалон, …) — конфиг + БД
+- Счёт типа `business` в economy
+- Наём / касса / поставки
+- Покупка бизнеса за ₽ с ledger
+
+**DoD:** касса не дюпается; права владельца/сотрудника server-side.  
+**Референс-идеи:** boss menu, society account — реализуем на SyncCore, не QB/ESX society.
+
+---
+
+## Stage 18 — Content polish
+
+**Depends:** PO.  
+**Scope:** полировка создания персонажа, дополнительные HUD-виджеты (задания/кейсы из макета — только после дизайна экономики наград), локализации, QoL.
 
 ---
 
@@ -166,4 +201,5 @@ PO: Pantheon Ai. Следующий этап не стартует без под
 
 - Смена foundation на QB/ESX/Qbox
 - TypeScript runtime без approve
-- Полный клон механик Majestic/GTA5RP
+- Полный клон механик Majestic/GTA5RP / чужих закрытых ресурсов
+- Копирование ассетов/NUI из платных паков

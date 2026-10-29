@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sync-accent: #3b82f6;
+  --sync-accent-soft: rgba(59, 130, 246, 0.35);
+  --sync-text: #f3f6fb;
+  --sync-muted: #a8b4c7;
+  --sync-danger: #ef4444;
+  --sync-hunger: #1e3a8a;
+  --sync-thirst: #38bdf8;
+  --sync-cash: #22c55e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  background-color: transparent !important;
+  overflow: hidden;
+  font-family: Manrope, 'Golos Text', sans-serif;
+  color: var(--sync-text);
+  pointer-events: none;
+  color-scheme: only light;
+}
+
+.hud-glass {
+  background: rgba(10, 14, 22, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+}
+
+.hud-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.hud-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.hud-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.hud-mic {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.hud-mic.talking {
+  background: rgba(59, 130, 246, 0.45);
+  border-color: rgba(96, 165, 250, 0.7);
+}

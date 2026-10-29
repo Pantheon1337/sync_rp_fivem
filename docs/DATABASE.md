@@ -5,7 +5,7 @@
 ## Принципы
 
 - Engine: **InnoDB**, charset **utf8mb4**, collation **utf8mb4_unicode_ci**.
-- Деньги и критичные количества: `BIGINT` в минимальных единицах (копейки) **или** `DECIMAL(16,2)` — финальный выбор фиксируется в Stage 4 перед economy; до тех пор ledger-таблицы помечены как future.
+- Деньги: **`BIGINT` целые рубли (₽)** — решение Stage 4. Копейки не используем в ledger.
 - Каждая таблица имеет явного **владельца-ресурса** (см. MODULE_CONTRACTS).
 - Мягкое удаление (`deleted_at`) для персонажей/аккаунтов; hard delete — admin-only процедуры поздних этапов.
 - Миграции: `database/migrations/NNN_name.sql`, строго упорядочены.
@@ -88,17 +88,40 @@ UNIQUE (`account_id`, `slot`).
 
 ---
 
-## S4 — Economy (placeholders)
+## S4 — Economy (APPLY `003_economy_ledger.sql`)
 
-### `economy_accounts` — S0 stub / S4
+### `economy_accounts` — S4
 
-- `id`, `character_id`, `type` (`cash`|`bank`|…), `balance`, timestamps
-- UNIQUE (`character_id`, `type`)
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | BIGINT UNSIGNED PK | |
+| `character_id` | FK → characters | |
+| `type` | VARCHAR(16) | `cash` \| `bank` \| `business` \| `org` |
+| `balance` | BIGINT ≥ 0 | целые ₽ |
+| timestamps | DATETIME(3) | |
 
-### `economy_ledger` — S0 stub / S4
+UNIQUE (`character_id`, `type`). При первом `ensurePlayerAccounts` seed из `characters.cash/bank`, если ledger-счета нулевые.
 
-- `id`, `from_account_id` NULL, `to_account_id` NULL, `amount`, `currency`, `reason_code`, `idempotency_key` UNIQUE, `meta_json`, `created_at`
-- Все изменения баланса — только через ledger + транзакцию InnoDB (anti-dupe).
+### `economy_ledger` — S4
+
+| Column | Notes |
+| --- | --- |
+| `from_account_id` / `to_account_id` | NULL = система |
+| `amount` | BIGINT > 0 |
+| `currency` | default `RUB` |
+| `reason_code` | `bank_deposit`, `migration_seed`, … |
+| `idempotency_key` | UNIQUE — anti-dupe |
+| `meta_json` | optional |
+
+Все изменения баланса — только через ledger + InnoDB txn (`minAffectedRows` на debit).
+
+### Future economy-related (не S4 DDL)
+
+| Domain | Stage | Notes |
+| --- | --- | --- |
+| ATM / cards / P2P | 16 | расширяет bank UX |
+| Business accounts ops | 17 | type=`business` уже в enum |
+| Property deeds | 12 | housing tables + ledger reasons |
 
 ---
 
@@ -137,7 +160,7 @@ UNIQUE (`account_id`, `slot`).
 | ------------------------------- | ----------- | -------------------------- | -------- |
 | accounts, identifiers, sessions | ✅          | placeholder `001` comments | Stage 1  |
 | characters                      | ✅          | placeholder `002`          | Stage 2  |
-| economy_*                       | ✅          | placeholder `003`          | Stage 4  |
+| economy_*                       | ✅          | APPLY `003`                | Stage 4  |
 | vehicles, plates, garages       | ✅          | placeholder `004`          | Stage 6  |
 | inventory, jobs, bans           | кратко      | нет отдельных файлов пока  | Stage 5+ |
 

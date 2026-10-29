@@ -206,7 +206,30 @@ WHERE disconnected_at IS NULL;
 
 ---
 
-## Stage 3 — регистрация / вход / NUI (актуально)
+## Stage 4 — экономика + HUD + банк (актуально)
+
+Полный чеклист: [SPRINT4.md](./SPRINT4.md). Ветка: `cursor/stage-4-economy-hud-5b89`.
+
+```powershell
+cd F:\SyncRP2.0\sync_rp_fivem
+git pull origin cursor/stage-4-economy-hud-5b89
+# при конфликте html:
+git checkout -- resources/sync_hud/html resources/sync_bank/html
+$env:SYNC_DB_DSN="mysql://syncrp:ВАШ_ПАРОЛЬ@127.0.0.1:3306/syncrp"
+npm.cmd run migrate
+cd nui && npm.cmd ci && npm.cmd run build:hud && npm.cmd run build:bank && cd ..
+xcopy /E /I /Y resources\sync_economy F:\SyncRP2.0\sync\resources\sync_economy
+xcopy /E /I /Y resources\sync_hud     F:\SyncRP2.0\sync\resources\sync_hud
+xcopy /E /I /Y resources\sync_bank    F:\SyncRP2.0\sync\resources\sync_bank
+xcopy /E /I /Y resources\sync_db      F:\SyncRP2.0\sync\resources\sync_db
+```
+
+В `server.cfg` после chat: `ensure sync_economy`, `ensure sync_hud`, `ensure sync_bank`.  
+В игре: HUD справа (cash/bank); **F6** или `/bank`.
+
+---
+
+## Stage 3 — регистрация / вход / NUI
 
 Полный чеклист: [SPRINT3.md](./SPRINT3.md). Ветка: `cursor/stage-3-nui-characters-5b89`.
 

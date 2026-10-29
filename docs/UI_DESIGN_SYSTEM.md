@@ -1,6 +1,6 @@
 # SyncRP UI Design System (NUI)
 
-Статус: **Stage 3** — токены реализованы в `nui/` + `sync_nui`.
+Статус: **Stage 4** — токены в `nui/`; surfaces: characters (`sync_nui`), chat (`sync_chat`), HUD (`sync_hud`), bank (`sync_bank`).
 
 Русский язык — **default** для всего UI.
 

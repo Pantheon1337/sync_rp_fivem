@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && vite build --config vite.chat.config.js",
+    "build": "vite build && vite build --config vite.chat.config.js && vite build --config vite.hud.config.js && vite build --config vite.bank.config.js",
     "build:chars": "vite build",
     "build:chat": "vite build --config vite.chat.config.js",
+    "build:hud": "vite build --config vite.hud.config.js",
+    "build:bank": "vite build --config vite.bank.config.js",
     "preview": "vite preview",
     "test:e2e": "playwright test"
   },

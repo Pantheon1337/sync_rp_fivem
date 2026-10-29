@@ -72,7 +72,18 @@ async function transaction(steps) {
         return v;
       });
       const [rows] = await conn.execute(step.sql, params);
-      results.push(normalizeResult(rows));
+      const normalized = normalizeResult(rows);
+      if (
+        step.minAffectedRows != null &&
+        (!normalized ||
+          typeof normalized !== 'object' ||
+          Number(normalized.affectedRows || 0) < Number(step.minAffectedRows))
+      ) {
+        const err = new Error(step.failMessage || 'sync_db: affectedRows assertion failed');
+        err.code = step.failCode || 'AFFECTED_ROWS';
+        throw err;
+      }
+      results.push(normalized);
     }
     await conn.commit();
     return results;

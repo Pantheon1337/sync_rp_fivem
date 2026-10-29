@@ -117,13 +117,33 @@ Save appearance → normalize freemode JSON → select + spawn.
 
 ## `sync_economy` (Stage 4)
 
-**Владеет:** `economy_accounts`, `economy_ledger` (и миграция балансов с characters).
+**Владеет:** `economy_accounts`, `economy_ledger` (seed из `characters.cash/bank`).  
+**Единица:** BIGINT целые ₽.
 
-| Exports | `getBalance`, `transfer`, `credit`, `debit` (все с `idempotencyKey`) |
-| Net | `sync:economy:transfer` (strict validate) |
-| Events | `sync:economy:balanceChanged` |
+| Exports | `getBalance`, `getBalances`, `ensurePlayerAccounts`, `transfer`, `credit`, `debit`, `listLedger`, `formatRub` (мутации с `idempotencyKey`) |
+| Net | `sync:economy:getBalances`, `sync:economy:transfer`, `sync:economy:listLedger` |
+| Events | `sync:economy:balanceChanged`, net `sync:economy:balances` |
+| Hooks | `sync:characters:selected` → ensure + push HUD |
 
-Клиент **не** может set balance. Anti-dupe через unique `idempotency_key` + row locks.
+Клиент **не** может set balance. Anti-dupe: UNIQUE `idempotency_key` + `UPDATE … AND balance >= ?` в txn.
+
+## `sync_hud` (Stage 4)
+
+**Владеет:** always-on NUI overlay (classic / minimal / server).  
+**Не владеет:** балансами (только отображает push от economy).
+
+| Convar | `sync_hud_variant` = `classic` \| `minimal` \| `server` |
+| Command | `/hud` toggle |
+| Net in | `sync:economy:balances`, `sync:hud:setVisible` |
+
+## `sync_bank` (Stage 4)
+
+**Владеет:** bank NUI shell.  
+**Не владеет:** ledger (только вызывает `sync_economy`).
+
+| Command / key | `/bank`, F6 |
+| Net | `sync:bank:open`, `sync:bank:transfer` |
+| NUI | accounts / transfer / history (RU) |
 
 ---
 

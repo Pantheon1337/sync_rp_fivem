@@ -1,4 +1,4 @@
-# SyncRP FXServer example — Stage 2
+# SyncRP FXServer example — Stage 4
 # Copy to your server-data as server.cfg (do NOT commit real secrets).
 
 endpoint_add_tcp "0.0.0.0:30120"
@@ -30,6 +30,13 @@ ensure sync_characters
 ensure sync_spawn
 ensure sync_nui
 ensure sync_chat
+ensure sync_economy
+ensure sync_hud
+ensure sync_bank
+
+# HUD variant: classic | minimal | server
+setr sync_hud_variant "classic"
+setr sync_server_id 1
 
 # Optional: disable default cfx chat UI if present
 # ensure chat

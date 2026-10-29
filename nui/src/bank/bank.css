@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sync-bg: #0c121c;
+  --sync-elevated: #141b27;
+  --sync-card: #161d2a;
+  --sync-border: rgba(255, 255, 255, 0.08);
+  --sync-text: #eef2f8;
+  --sync-muted: #8b97ab;
+  --sync-accent: #3b82f6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  overflow: hidden;
+  font-family: Manrope, 'Golos Text', sans-serif;
+  color: var(--sync-text);
+}
+
+.bank-shell {
+  width: min(440px, 94vw);
+  max-height: min(720px, 92vh);
+  background: linear-gradient(180deg, #121821 0%, #0d121a 100%);
+  border: 1px solid var(--sync-border);
+  border-radius: 18px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.bank-tab {
+  border: none;
+  background: transparent;
+  color: var(--sync-muted);
+  font: inherit;
+  font-weight: 600;
+  padding: 0.55rem 0.2rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.bank-tab.active {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
+.bank-card {
+  background: var(--sync-card);
+  border: 1px solid var(--sync-border);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+}
+
+.bank-btn {
+  border: none;
+  background: #2a3342;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bank-btn:hover {
+  background: #343e50;
+}
+
+.bank-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.bank-input {
+  width: 100%;
+  background: #0f1520;
+  border: 1px solid var(--sync-border);
+  border-radius: 10px;
+  color: #fff;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  outline: none;
+}
+
+.bank-input:focus {
+  border-color: rgba(59, 130, 246, 0.55);
+}
+
+.bank-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
