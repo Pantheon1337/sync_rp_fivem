@@ -18,5 +18,5 @@ files {
 client_script 'client/main.lua'
 server_script 'server/main.js'
 
-dependency 'sync_core'
+-- Do not depend on server_only resources (breaks client join).
 dependency '/server:12913'
