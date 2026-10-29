@@ -69,10 +69,18 @@ function Write-Step([string]$msg) {
   Write-Host "==> $msg" -ForegroundColor Cyan
 }
 
+# -File / .cmd often pass "hud,bank" as ONE string; split commas.
+$Targets = @(
+  $Targets |
+    ForEach-Object { $_ -split ',' } |
+    ForEach-Object { $_.ToLowerInvariant().Trim() } |
+    Where-Object { $_ }
+)
 if ($Targets -contains 'all') {
   $Targets = @('hud', 'bank', 'chat', 'nui', 'economy', 'db', 'characters', 'spawn')
 }
-$Targets = $Targets | ForEach-Object { $_.ToLowerInvariant().Trim() } | Select-Object -Unique
+$Targets = $Targets | Select-Object -Unique
+Write-Host ("Targets: " + ($Targets -join ', '))
 
 $htmlRoots = @(
   'resources/sync_hud/html',
