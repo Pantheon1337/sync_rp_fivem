@@ -2,11 +2,36 @@
 
 const path = require('path');
 
+/**
+ * FiveM Node keeps require.cache across `restart` — without busting cache,
+ * hot-reload leaves the OLD charactersRepo in memory (create bugs look "unfixed").
+ */
+function bustAndLoadRepo() {
+  const root = GetResourcePath(GetCurrentResourceName());
+  const files = ['charactersRepo.js', 'validate.js', 'appearance.js'];
+  for (const f of files) {
+    const full = path.join(root, 'lib', f);
+    try {
+      const resolved = require.resolve(full);
+      delete require.cache[resolved];
+    } catch {
+      /* not cached yet */
+    }
+  }
+  // Also clear relative resolves used in tests / nested requires
+  for (const key of Object.keys(require.cache || {})) {
+    if (/sync_characters[\\/]+lib[\\/]+(charactersRepo|validate|appearance)\.js$/i.test(key)) {
+      delete require.cache[key];
+    }
+  }
+  const mod = require(path.join(root, 'lib', 'charactersRepo.js'));
+  console.log('[sync_characters] modules loaded from', root);
+  return mod.createCharactersRepo;
+}
+
 let createCharactersRepo;
 try {
-  const root = GetResourcePath(GetCurrentResourceName());
-  ({ createCharactersRepo } = require(path.join(root, 'lib', 'charactersRepo.js')));
-  console.log('[sync_characters] modules loaded from', root);
+  createCharactersRepo = bustAndLoadRepo();
 } catch (err) {
   console.error(
     '[sync_characters] FATAL module load:',
@@ -412,9 +437,17 @@ setInterval(() => {
 
 on('onResourceStart', (res) => {
   if (res === GetCurrentResourceName()) {
-    repo = createCharactersRepo(db(), { maxSlots: maxSlots() });
-    lastPos.clear();
-    console.log(`[sync_characters] loaded (slots=${maxSlots()})`);
+    try {
+      createCharactersRepo = bustAndLoadRepo();
+      repo = createCharactersRepo(db(), { maxSlots: maxSlots() });
+      lastPos.clear();
+      console.log(`[sync_characters] loaded (slots=${maxSlots()}) create=hardened`);
+    } catch (err) {
+      console.error(
+        '[sync_characters] reload failed:',
+        err && err.stack ? err.stack : err && err.message ? err.message : err,
+      );
+    }
   }
 });
 

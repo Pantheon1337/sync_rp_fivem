@@ -1,7 +1,16 @@
 'use strict';
 
 const path = require('path');
-const { randomUUID } = require('node:crypto');
+const crypto = require('crypto');
+const randomUUID =
+  typeof crypto.randomUUID === 'function'
+    ? () => crypto.randomUUID()
+    : () =>
+        'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+          const r = (Math.random() * 16) | 0;
+          const v = c === 'x' ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+        });
 
 function loadValidate() {
   const g = globalThis;

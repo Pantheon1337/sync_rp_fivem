@@ -36,10 +36,17 @@ cd F:\SyncRP2.0\sync_rp_fivem
 exec syncrp-hotreload.cfg
 ```
 
+Скрипт пишет `stop` → `ensure` в правильном порядке (characters/spawn **до** nui), плюс финальный `ensure sync_nui` — иначе рестарт `sync_characters` гасит NUI и он остаётся выключенным.
+
+После `exec` — **переподключите клиент** (CEF кэширует старый html).
+
+В консоли FX после hotreload должно быть: `[sync_characters] loaded … create=hardened`.
+
 ### Когда всё же нужен полный рестарт FX
 
 - Первый `ensure` нового ресурса в `server.cfg`
 - Миграции / смена `sync_db_dsn`
 - Правки `sync_core` / порядка загрузки
+- Если hotreload не подхватил JS (редко; sync_characters теперь сбрасывает `require.cache`)
 
 Secrets (DSN) — только env / `-Dsn`, не коммитить.

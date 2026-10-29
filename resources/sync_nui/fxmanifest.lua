@@ -4,7 +4,7 @@ game 'gta5'
 name 'sync_nui'
 author 'SyncRP'
 description 'SyncRP NUI shell — character select'
-version '0.3.3'
+version '0.3.4'
 
 node_version '22'
 
