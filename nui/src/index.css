@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sync-bg-deep: #070b12;
+  --sync-bg: #0c121c;
+  --sync-bg-elevated: #121a27;
+  --sync-glass: rgba(16, 24, 40, 0.72);
+  --sync-glass-border: rgba(148, 175, 220, 0.18);
+  --sync-text: #e8eef8;
+  --sync-text-muted: #8b9bb3;
+  --sync-text-subtle: #5c6b82;
+  --sync-accent: #3b82f6;
+  --sync-accent-hover: #60a5fa;
+  --sync-accent-pressed: #2563eb;
+  --sync-accent-soft: rgba(59, 130, 246, 0.16);
+  --sync-danger: #f87171;
+  --sync-radius-md: 10px;
+  --sync-radius-lg: 16px;
+  --sync-blur: 16px;
+  --sync-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  width: 100%;
+  background: transparent;
+  color: var(--sync-text);
+  font-family: Manrope, 'Golos Text', sans-serif;
+}
+
+body {
+  overflow: hidden;
+}
+
+.sync-glass {
+  background: var(--sync-glass);
+  border: 1px solid var(--sync-glass-border);
+  backdrop-filter: blur(var(--sync-blur));
+  border-radius: var(--sync-radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.sync-input {
+  width: 100%;
+  border-radius: var(--sync-radius-md);
+  border: 1px solid var(--sync-glass-border);
+  background: var(--sync-bg-elevated);
+  color: var(--sync-text);
+  padding: 0.7rem 0.85rem;
+  outline: none;
+  transition:
+    border-color 120ms var(--sync-ease),
+    box-shadow 120ms var(--sync-ease);
+}
+
+.sync-input:focus {
+  border-color: var(--sync-accent);
+  box-shadow: 0 0 0 3px var(--sync-accent-soft);
+}
+
+.sync-btn {
+  border-radius: var(--sync-radius-md);
+  padding: 0.7rem 1.1rem;
+  font-weight: 600;
+  transition:
+    background 120ms var(--sync-ease),
+    transform 120ms var(--sync-ease),
+    opacity 120ms var(--sync-ease);
+}
+
+.sync-btn:active {
+  transform: scale(0.98);
+}
+
+.sync-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sync-btn-primary {
+  background: var(--sync-accent);
+  color: white;
+}
+
+.sync-btn-primary:hover:not(:disabled) {
+  background: var(--sync-accent-hover);
+}
+
+.sync-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--sync-glass-border);
+  color: var(--sync-text);
+}
+
+.sync-btn-ghost:hover:not(:disabled) {
+  background: var(--sync-accent-soft);
+}
+
+/* SyncRP scrollbars — thin glass, not browser chrome */
+.sync-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.45) rgba(16, 24, 40, 0.35);
+}
+
+.sync-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.sync-scroll::-webkit-scrollbar-track {
+  background: rgba(16, 24, 40, 0.35);
+  border-radius: 999px;
+  margin: 4px 0;
+}
+
+.sync-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(96, 165, 250, 0.55), rgba(37, 99, 235, 0.55));
+  border-radius: 999px;
+  border: 1px solid rgba(148, 175, 220, 0.15);
+}
+
+.sync-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(96, 165, 250, 0.8), rgba(37, 99, 235, 0.75));
+}
+
+.sync-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}

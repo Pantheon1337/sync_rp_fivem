@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sync-accent: #3b82f6;
+  --sync-text: #f3f6fb;
+  --sync-cash: #4ade80;
+  --sync-bank: #e8eef8;
+  --sync-hunger: #f97316;
+  --sync-thirst: #38bdf8;
+  --sync-mic: #60a5fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  background-color: transparent !important;
+  overflow: hidden;
+  font-family: Manrope, 'Golos Text', sans-serif;
+  color: var(--sync-text);
+  pointer-events: none;
+  color-scheme: only light;
+}
+
+.hud-panel {
+  background: transparent !important;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.hud-text {
+  text-shadow:
+    0 0 3px rgba(0, 0, 0, 1),
+    0 1px 2px rgba(0, 0, 0, 0.95),
+    0 2px 8px rgba(0, 0, 0, 0.85);
+}
+
+/* Vertical stack further RIGHT of GTA minimap (clear gap past radar) */
+.hud-needs {
+  position: absolute;
+  left: 30vh;
+  bottom: 4.5vh;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.hud-need {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  background: transparent !important;
+  box-shadow: none;
+}
+
+.hud-need-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  padding: 2px;
+  background: conic-gradient(var(--need-color) calc(var(--need-pct) * 1%), rgba(255, 255, 255, 0.18) 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.hud-need-icon {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.95));
+}
+
+.hud-need-val {
+  position: absolute;
+  bottom: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow:
+    0 0 2px #000,
+    0 1px 2px #000;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mic only while talking — same column as needs */
+.hud-mic-live {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: transparent !important;
+  border: 2px solid var(--sync-mic);
+  color: #93c5fd;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.95));
+  animation: hud-mic-pulse 1s ease-in-out infinite;
+}
+
+@keyframes hud-mic-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.06);
+  }
+}

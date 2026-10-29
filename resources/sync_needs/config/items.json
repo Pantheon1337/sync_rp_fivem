@@ -1,0 +1,63 @@
+{
+  "_comment": "Consumables — ESX basicneeds Config.Items pattern. Inventory (Stage 5) will call sync_needs:useItem. Until then: /sync_eat /sync_drink.",
+  "bread": {
+    "label": "Хлеб",
+    "type": "food",
+    "prop": "prop_cs_burger_01",
+    "status": 20,
+    "remove": true,
+    "anim": {
+      "dict": "mp_player_inteat@burger",
+      "name": "mp_player_int_eat_burger",
+      "flag": 49,
+      "duration": 3000
+    },
+    "pos": [0.13, 0.05, 0.02],
+    "rot": [-50.0, 16.0, 60.0]
+  },
+  "water": {
+    "label": "Вода",
+    "type": "drink",
+    "prop": "prop_ld_flow_bottle",
+    "status": 20,
+    "remove": true,
+    "anim": {
+      "dict": "mp_player_intdrink",
+      "name": "loop_bottle",
+      "flag": 49,
+      "duration": 3000
+    },
+    "pos": [0.12, 0.008, 0.03],
+    "rot": [240.0, -60.0, 0.0]
+  },
+  "burger": {
+    "label": "Бургер",
+    "type": "food",
+    "prop": "prop_cs_burger_01",
+    "status": 35,
+    "remove": true,
+    "anim": {
+      "dict": "mp_player_inteat@burger",
+      "name": "mp_player_int_eat_burger",
+      "flag": 49,
+      "duration": 3500
+    },
+    "pos": [0.13, 0.05, 0.02],
+    "rot": [-50.0, 16.0, 60.0]
+  },
+  "coffee": {
+    "label": "Кофе",
+    "type": "drink",
+    "prop": "p_amb_coffeecup_01",
+    "status": 15,
+    "remove": true,
+    "anim": {
+      "dict": "mp_player_intdrink",
+      "name": "loop_bottle",
+      "flag": 49,
+      "duration": 3000
+    },
+    "pos": [0.0, 0.0, 0.0],
+    "rot": [0.0, 0.0, 0.0]
+  }
+}

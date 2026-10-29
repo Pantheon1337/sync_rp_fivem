@@ -1,0 +1,15 @@
+{
+  "_comment": "ESX basicneeds/status rates mapped to 0–100%. Tick 1s. Hunger empty ~2.8h, thirst ~3.7h at defaults.",
+  "tickMs": 1000,
+  "saveMs": 30000,
+  "max": 100,
+  "defaultHunger": 100,
+  "defaultThirst": 100,
+  "respawnHunger": 50,
+  "respawnThirst": 50,
+  "drainHungerPerTick": 0.01,
+  "drainThirstPerTick": 0.0075,
+  "damageWhenEmpty": 1,
+  "damageWhenCritical": 5,
+  "criticalHealthThreshold": 150
+}

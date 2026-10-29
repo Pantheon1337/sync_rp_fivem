@@ -1,0 +1,24 @@
+# SyncRP CI — Stage 0 minimal gate (lint + unit).
+# MariaDB service / FXServer jobs are intentionally absent until Stage 1+.
+# Do not claim FiveM integration success from this workflow.
+
+name: CI
+
+on:
+  push:
+    branches: [main, 'cursor/**']
+  pull_request:
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
