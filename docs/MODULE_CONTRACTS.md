@@ -143,7 +143,7 @@ Save appearance → normalize freemode JSON → select + spawn.
 
 | Command / key | `/bank`, F6 (только у точки, если не `sync_bank_allow_remote`) |
 | Interact | E у отделения / ATM |
-| Config | `config/locations.json` (banks, atms, atmModels) |
+| Config | `config/locations.json` (interact/server); `config/blips.lua` + `client/blips.lua` (map icons, client-only, sprite 605) |
 | Net | `sync:bank:open` (+spot), `sync:bank:transfer`, `sync:bank:openDenied` |
 | NUI | accounts / transfer / history (RU); title Банк/Банкомат |
 

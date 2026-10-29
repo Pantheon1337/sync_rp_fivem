@@ -3,18 +3,7 @@
   "interactRadius": 2.2,
   "serverRadius": 3.5,
   "drawDistance": 25.0,
-  "blip": {
-    "_ref": "https://docs.fivem.net/docs/game-references/blips/ — 605 radar_nhp_starterpack",
-    "sprite": 605,
-    "colour": 2,
-    "display": 4,
-    "scaleBank": 0.9,
-    "scaleAtm": 0.7,
-    "shortRangeBanks": false,
-    "shortRangeAtms": true,
-    "showBanks": true,
-    "showAtms": true
-  },
+  "_blips": "Map blips live in config/blips.lua + client/blips.lua (ESX/QB client pattern). JSON is interact/server only.",
   "atmModels": [
     "prop_atm_01",
     "prop_atm_02",
