@@ -1,18 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CHANNELS, COMMANDS, filterSuggestions, parseInput } from './commands';
+import { filterSuggestions, mergeChannels, parseInput } from './commands';
 import { nuiFetch, onNuiMessage } from './nui';
 
 const defaultSettings = {
   showTime: true,
-  showChannel: true,
-  sound: true,
+  sound: false,
   system: true,
-  autoHide: true,
-  hideAfter: 8,
+  hideAfter: 10,
   fontScale: 100,
-  opacity: 80,
-  lines: 15,
-  mode: 'full', // full | compact | hidden
+  lines: 12,
 };
 
 function formatTime(ts) {
@@ -20,27 +16,30 @@ function formatTime(ts) {
   return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 }
 
-function MessageLine({ msg, settings }) {
-  const tagStyle = { background: `${msg.tagColor || '#3b82f6'}22`, color: msg.tagColor || '#60a5fa' };
+function MessageLine({ msg, settings, fading }) {
   return (
-    <div className="chat-msg animate-[fadein_0.2s_ease]">
+    <div className={`chat-msg ${fading ? 'fading' : ''}`}>
       {settings.showTime && (
-        <span className="mr-1.5 text-sync-subtle">{formatTime(msg.ts)}</span>
+        <span style={{ color: '#9aa8bc', marginRight: 6 }}>{formatTime(msg.ts)}</span>
       )}
       {msg.tag && (
-        <span className="chat-tag" style={tagStyle}>
+        <span
+          className="chat-tag"
+          style={{
+            background: `${msg.tagColor || '#3b82f6'}33`,
+            color: msg.tagColor || '#93c5fd',
+          }}
+        >
           {msg.tag}
         </span>
       )}
       {msg.name && (
-        <span style={{ color: msg.nameColor || '#93c5fd' }} className="font-semibold">
-          {msg.name}
-        </span>
+        <span style={{ color: msg.nameColor || '#93c5fd', fontWeight: 600 }}>{msg.name}</span>
       )}
-      {msg.name && <span className="text-sync-subtle">: </span>}
-      <span style={{ color: msg.textColor || '#e8eef8' }}>{msg.text}</span>
+      {msg.name && <span style={{ color: '#9aa8bc' }}>: </span>}
+      <span style={{ color: msg.textColor || '#f3f6fb' }}>{msg.text}</span>
       {msg.suffix && (
-        <span className="ml-1 font-semibold" style={{ color: msg.suffixColor || '#34d399' }}>
+        <span style={{ color: msg.suffixColor || '#34d399', fontWeight: 600, marginLeft: 4 }}>
           {msg.suffix}
         </span>
       )}
@@ -53,6 +52,7 @@ export default function ChatApp() {
   const [channel, setChannel] = useState('global');
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
+  const [extraChannels, setExtraChannels] = useState([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settings, setSettings] = useState(() => {
     try {
@@ -61,20 +61,24 @@ export default function ChatApp() {
       return defaultSettings;
     }
   });
-  const [toast, setToast] = useState(null);
+  const [now, setNow] = useState(Date.now());
   const listRef = useRef(null);
   const inputRef = useRef(null);
-  const suggestIndex = useRef(0);
   const [suggestSel, setSuggestSel] = useState(0);
 
+  const channels = useMemo(() => mergeChannels(extraChannels), [extraChannels]);
   const suggestions = useMemo(() => filterSuggestions(input), [input]);
 
   useEffect(() => {
     localStorage.setItem('sync_chat_settings', JSON.stringify(settings));
     document.documentElement.style.setProperty('--chat-font-scale', String(settings.fontScale / 100));
-    document.documentElement.style.setProperty('--chat-opacity', String(settings.opacity / 100));
     document.documentElement.style.setProperty('--chat-lines', String(settings.lines));
   }, [settings]);
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     return onNuiMessage((data) => {
@@ -82,7 +86,8 @@ export default function ChatApp() {
       if (data.action === 'open') {
         setOpen(true);
         setSettingsOpen(false);
-        setTimeout(() => inputRef.current?.focus(), 30);
+        nuiFetch('requestChannels');
+        setTimeout(() => inputRef.current?.focus(), 20);
       }
       if (data.action === 'close') {
         setOpen(false);
@@ -90,33 +95,33 @@ export default function ChatApp() {
         setInput('');
       }
       if (data.action === 'message' && data.message) {
-        pushMessage(data.message);
-        if (!open && data.message.channel && data.message.channel !== 'global') {
-          setToast({
-            title: 'Новое сообщение',
-            body: CHANNELS.find((c) => c.id === data.message.channel)?.label || data.message.channel,
-          });
-        }
+        setMessages((prev) => {
+          const rawTs = Number(data.message.ts);
+          const ts = Number.isFinite(rawTs) && rawTs > 1e12 ? rawTs : Date.now();
+          const next = [
+            ...prev,
+            {
+              ...data.message,
+              ts,
+              id: data.message.id || `${Date.now()}-${Math.random()}`,
+            },
+          ];
+          return next.slice(-100);
+        });
       }
       if (data.action === 'history' && Array.isArray(data.messages)) {
         setMessages(data.messages.slice(-80));
       }
+      if (data.action === 'channels' && Array.isArray(data.channels)) {
+        setExtraChannels(data.channels);
+      }
     });
-  }, [open]);
+  }, []);
 
   useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
-    }
+    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages, open]);
 
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3500);
-    return () => clearTimeout(t);
-  }, [toast]);
-
-  // Dev preview
   useEffect(() => {
     if (import.meta.env.DEV && !window.invokeNative) {
       setOpen(true);
@@ -128,8 +133,7 @@ export default function ChatApp() {
           tag: 'Общий',
           tagColor: '#60a5fa',
           name: 'Иван_Петров',
-          nameColor: '#93c5fd',
-          text: 'Всем привет в городе!',
+          text: 'Всем привет!',
         },
         {
           id: 2,
@@ -154,30 +158,11 @@ export default function ChatApp() {
           suffix: '| Удачно',
           suffixColor: '#34d399',
         },
-        {
-          id: 4,
-          ts: Date.now(),
-          channel: 'admin',
-          tag: 'Админ',
-          tagColor: '#f87171',
-          name: 'Support',
-          nameColor: '#fca5a5',
-          text: 'Не нарушайте правила сервера.',
-        },
       ]);
+      // Simulate membership unlock later:
+      // setExtraChannels([{ id: 'faction', label: 'Фракция' }]);
     }
   }, []);
-
-  function pushMessage(msg) {
-    setMessages((prev) => {
-      const next = [...prev, { ...msg, id: msg.id || `${Date.now()}-${Math.random()}` }];
-      return next.slice(-120);
-    });
-  }
-
-  function patchSettings(partial) {
-    setSettings((s) => ({ ...s, ...partial }));
-  }
 
   async function closeChat() {
     setOpen(false);
@@ -206,72 +191,68 @@ export default function ChatApp() {
       const dir = e.key === 'ArrowUp' ? -1 : 1;
       const next = (suggestSel + dir + suggestions.length) % suggestions.length;
       setSuggestSel(next);
-      suggestIndex.current = next;
-      if (e.key === 'Tab') {
-        setInput(`${suggestions[next].cmd} `);
-      }
+      if (e.key === 'Tab') setInput(`${suggestions[next].cmd} `);
       return;
     }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (suggestions.length && input.trim() === suggestions[suggestSel]?.cmd) {
-        setInput(`${suggestions[suggestSel].cmd} `);
-        return;
-      }
       send();
     }
   }
 
   const visibleMessages = useMemo(() => {
-    const max = Number(settings.lines) || 15;
+    const max = Number(settings.lines) || 12;
     let list = messages;
     if (channel !== 'global') {
-      list = messages.filter((m) => m.channel === channel || m.channel === 'system');
+      list = messages.filter((m) => m.channel === channel || m.kind === 'system');
     }
     if (!settings.system) {
-      list = list.filter((m) => m.kind !== 'system' && m.tag !== 'Система');
+      list = list.filter((m) => m.kind !== 'system');
     }
     return list.slice(-max);
   }, [messages, channel, settings.lines, settings.system]);
 
-  const mode = settings.mode;
-  const showChrome = open || mode !== 'hidden';
-
-  if (!showChrome && !toast) return null;
+  const hideMs = (Number(settings.hideAfter) || 10) * 1000;
 
   return (
-    <div className="pointer-events-none absolute inset-0">
+    <div className="absolute inset-0" style={{ background: 'transparent', pointerEvents: 'none' }}>
       <div
-        className={`pointer-events-auto absolute left-4 top-4 flex w-[min(440px,92vw)] flex-col gap-2 ${
-          mode === 'hidden' && !open ? 'opacity-0' : ''
-        }`}
+        className="absolute left-3 top-3 flex w-[min(420px,92vw)] flex-col gap-2"
+        style={{ pointerEvents: 'none' }}
       >
-        {(open || mode === 'full' || mode === 'compact') && (
-          <div
-            className={`chat-shell flex flex-col overflow-hidden ${mode === 'compact' && !open ? 'compact' : ''} ${
-              open ? '' : 'pointer-events-none'
-            }`}
-            style={{ maxHeight: open ? '420px' : '280px' }}
-          >
-            {(open || mode === 'full') && (
-              <div className="flex items-center gap-1 overflow-x-auto border-b border-[var(--sync-glass-border)] px-2 py-2">
-                {CHANNELS.map((c) => (
+        {/* Message feed — always transparent, like stock FiveM chat */}
+        <div
+          ref={listRef}
+          className="chat-feed sync-scroll overflow-y-auto"
+          style={{ maxHeight: open ? 280 : 240 }}
+        >
+          {visibleMessages.map((m) => {
+            const age = now - (m.ts || now);
+            const fading = !open && age > hideMs * 0.7;
+            const hidden = !open && age > hideMs;
+            if (hidden) return null;
+            return <MessageLine key={m.id} msg={m} settings={settings} fading={fading} />;
+          })}
+        </div>
+
+        {/* Only while typing (T) — light chrome, not a black browser window */}
+        {open && (
+          <div style={{ pointerEvents: 'auto' }}>
+            {channels.length > 1 && (
+              <div className="chat-tabs mb-1.5">
+                {channels.map((c) => (
                   <button
                     key={c.id}
                     type="button"
+                    className={`chat-tab ${channel === c.id ? 'active' : ''}`}
                     onClick={() => setChannel(c.id)}
-                    className={`whitespace-nowrap rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
-                      channel === c.id
-                        ? 'bg-sync-accent text-white'
-                        : 'text-sync-muted hover:bg-white/5 hover:text-sync-text'
-                    }`}
                   >
                     {c.label}
                   </button>
                 ))}
                 <button
                   type="button"
-                  className="ml-auto rounded-lg p-1.5 text-sync-muted hover:bg-white/5 hover:text-sync-text"
+                  className="chat-tab"
                   title="Настройки"
                   onClick={() => setSettingsOpen((v) => !v)}
                 >
@@ -280,189 +261,154 @@ export default function ChatApp() {
               </div>
             )}
 
-            <div
-              ref={listRef}
-              className="sync-scroll space-y-1.5 overflow-y-auto px-3 py-2"
-              style={{ minHeight: open ? 180 : 120, maxHeight: open ? 260 : 200 }}
-            >
-              {visibleMessages.map((m) => (
-                <MessageLine key={m.id} msg={m} settings={settings} />
-              ))}
+            {suggestions.length > 0 && (
+              <div className="chat-suggest mb-1.5">
+                {suggestions.map((s, i) => (
+                  <button
+                    key={s.cmd}
+                    type="button"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm"
+                    style={{
+                      background: i === suggestSel ? 'rgba(59,130,246,0.28)' : 'transparent',
+                      color: '#e8eef8',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setInput(`${s.cmd} `);
+                      setSuggestSel(i);
+                    }}
+                  >
+                    <span
+                      className="chat-tag"
+                      style={{ background: `${s.color}33`, color: s.color }}
+                    >
+                      {s.cmd}
+                    </span>
+                    <span style={{ color: '#9aa8bc' }}>{s.desc}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="chat-input-bar flex items-center gap-2 px-2 py-1.5">
+              <input
+                ref={inputRef}
+                placeholder="Сообщение..."
+                value={input}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  setSuggestSel(0);
+                }}
+                onKeyDown={onKeyDown}
+              />
+              <button
+                type="button"
+                onClick={send}
+                style={{
+                  background: 'var(--sync-accent)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '0.4rem 0.7rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                →
+              </button>
             </div>
 
-            {open && (
-              <div className="relative border-t border-[var(--sync-glass-border)] p-2">
-                {suggestions.length > 0 && (
-                  <div className="absolute bottom-full left-2 right-2 mb-1 overflow-hidden rounded-[var(--sync-radius-md)] border border-[var(--sync-glass-border)] bg-[rgba(10,14,22,0.94)] shadow-lg">
-                    {suggestions.map((s, i) => (
-                      <button
-                        key={s.cmd}
-                        type="button"
-                        className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm ${
-                          i === suggestSel ? 'bg-sync-accent/25' : 'hover:bg-white/5'
-                        }`}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          setInput(`${s.cmd} `);
-                          setSuggestSel(i);
-                        }}
-                      >
-                        <span
-                          className="chat-tag"
-                          style={{ background: `${s.color}33`, color: s.color }}
-                        >
-                          {s.cmd}
-                        </span>
-                        <span className="text-sync-muted">{s.desc}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <div className="flex flex-1 items-center rounded-[var(--sync-radius-md)] border border-[var(--sync-glass-border)] bg-[var(--sync-bg-elevated)] focus-within:border-sync-accent">
-                    <input
-                      ref={inputRef}
-                      className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm text-sync-text outline-none placeholder:text-sync-subtle"
-                      placeholder="Сообщение..."
-                      value={input}
-                      onChange={(e) => {
-                        setInput(e.target.value);
-                        setSuggestSel(0);
-                      }}
-                      onKeyDown={onKeyDown}
-                    />
-                    <button
-                      type="button"
-                      className="mr-1 rounded-md bg-sync-accent px-2.5 py-1.5 text-sm font-bold text-white hover:bg-sync-accent-hover"
-                      onClick={send}
-                      title="Отправить"
-                    >
-                      →
-                    </button>
-                  </div>
+            {channels.length <= 1 && (
+              <div className="mt-1 flex gap-1" style={{ pointerEvents: 'auto' }}>
+                <button type="button" className="chat-tab" onClick={() => setSettingsOpen((v) => !v)}>
+                  ⚙ Настройки
+                </button>
+                <span style={{ color: '#7a879c', fontSize: 11, alignSelf: 'center' }}>
+                  Esc — закрыть · /me /do /try
+                </span>
+              </div>
+            )}
+
+            {settingsOpen && (
+              <div className="chat-settings mt-2 text-sm" style={{ color: '#a8b4c7' }}>
+                <div className="mb-2 flex justify-between" style={{ color: '#e8eef8', fontWeight: 700 }}>
+                  <span>Настройки чата</span>
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', color: '#9aa8bc', cursor: 'pointer' }}
+                    onClick={() => setSettingsOpen(false)}
+                  >
+                    Закрыть
+                  </button>
                 </div>
-                <div className="mt-1.5 flex gap-1 px-0.5 text-[10px] text-sync-subtle">
-                  {COMMANDS.slice(0, 6).map((c) => (
-                    <span key={c.cmd} className="chat-tag" style={{ background: `${c.color}22`, color: c.color }}>
-                      {c.cmd}
-                    </span>
-                  ))}
-                </div>
+                {[
+                  ['showTime', 'Показывать время'],
+                  ['system', 'Системные сообщения'],
+                ].map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className="mb-2 flex w-full items-center justify-between"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'inherit',
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                    onClick={() => setSettings((s) => ({ ...s, [key]: !s[key] }))}
+                  >
+                    <span>{label}</span>
+                    <span className={`chat-toggle ${settings[key] ? 'on' : ''}`} />
+                  </button>
+                ))}
+                <label className="mb-2 block">
+                  Скрытие сообщений: {settings.hideAfter}с
+                  <input
+                    className="chat-slider mt-2"
+                    type="range"
+                    min={4}
+                    max={20}
+                    value={settings.hideAfter}
+                    onChange={(e) =>
+                      setSettings((s) => ({ ...s, hideAfter: Number(e.target.value) }))
+                    }
+                  />
+                </label>
+                <label className="mb-2 block">
+                  Размер текста: {settings.fontScale}%
+                  <input
+                    className="chat-slider mt-2"
+                    type="range"
+                    min={85}
+                    max={130}
+                    value={settings.fontScale}
+                    onChange={(e) =>
+                      setSettings((s) => ({ ...s, fontScale: Number(e.target.value) }))
+                    }
+                  />
+                </label>
+                <label className="block">
+                  Число строк: {settings.lines}
+                  <input
+                    className="chat-slider mt-2"
+                    type="range"
+                    min={6}
+                    max={20}
+                    value={settings.lines}
+                    onChange={(e) => setSettings((s) => ({ ...s, lines: Number(e.target.value) }))}
+                  />
+                </label>
+                <p className="mt-3" style={{ fontSize: 11, color: '#7a879c' }}>
+                  Фракция / Семья появятся автоматически, когда персонаж вступит в организацию.
+                </p>
               </div>
             )}
           </div>
         )}
-
-        {settingsOpen && open && (
-          <div className="chat-shell pointer-events-auto p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-display text-sm font-bold">Настройки чата</h3>
-              <button
-                type="button"
-                className="text-xs text-sync-muted hover:text-sync-text"
-                onClick={() => setSettingsOpen(false)}
-              >
-                Закрыть
-              </button>
-            </div>
-            <div className="space-y-3 text-sm">
-              {[
-                ['showTime', 'Показывать время'],
-                ['showChannel', 'Показывать канал'],
-                ['sound', 'Звуковые уведомления'],
-                ['system', 'Системные сообщения'],
-                ['autoHide', 'Автоскрытие'],
-              ].map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  className="flex w-full items-center justify-between gap-3 text-left text-sync-muted"
-                  onClick={() => patchSettings({ [key]: !settings[key] })}
-                >
-                  <span>{label}</span>
-                  <span className={`chat-toggle ${settings[key] ? 'on' : ''}`} />
-                </button>
-              ))}
-              <label className="block text-sync-muted">
-                Скрытие через (сек): {settings.hideAfter}
-                <input
-                  className="chat-slider mt-2"
-                  type="range"
-                  min={3}
-                  max={20}
-                  value={settings.hideAfter}
-                  onChange={(e) => patchSettings({ hideAfter: Number(e.target.value) })}
-                />
-              </label>
-              <label className="block text-sync-muted">
-                Размер текста: {settings.fontScale}%
-                <input
-                  className="chat-slider mt-2"
-                  type="range"
-                  min={80}
-                  max={140}
-                  value={settings.fontScale}
-                  onChange={(e) => patchSettings({ fontScale: Number(e.target.value) })}
-                />
-              </label>
-              <label className="block text-sync-muted">
-                Прозрачность: {settings.opacity}%
-                <input
-                  className="chat-slider mt-2"
-                  type="range"
-                  min={40}
-                  max={95}
-                  value={settings.opacity}
-                  onChange={(e) => patchSettings({ opacity: Number(e.target.value) })}
-                />
-              </label>
-              <label className="block text-sync-muted">
-                Число строк: {settings.lines}
-                <input
-                  className="chat-slider mt-2"
-                  type="range"
-                  min={8}
-                  max={24}
-                  value={settings.lines}
-                  onChange={(e) => patchSettings({ lines: Number(e.target.value) })}
-                />
-              </label>
-              <div className="flex flex-wrap gap-2 pt-1">
-                {[
-                  ['full', 'Полный'],
-                  ['compact', 'Компактный'],
-                  ['hidden', 'Скрытый'],
-                ].map(([id, label]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
-                      settings.mode === id ? 'bg-sync-accent text-white' : 'bg-white/5 text-sync-muted'
-                    }`}
-                    onClick={() => patchSettings({ mode: id })}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
-
-      {toast && (
-        <div className="pointer-events-auto absolute bottom-8 right-6 w-64 animate-[fadein_0.25s_ease] rounded-[var(--sync-radius-md)] border border-sync-accent/40 bg-[rgba(30,64,175,0.92)] p-3 shadow-lg">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <p className="text-sm font-bold text-white">{toast.title}</p>
-              <p className="mt-0.5 text-xs text-blue-100">{toast.body}</p>
-            </div>
-            <button type="button" className="text-blue-100 hover:text-white" onClick={() => setToast(null)}>
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

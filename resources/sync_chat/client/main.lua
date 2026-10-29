@@ -2,6 +2,7 @@ local open = false
 
 local function setOpen(state)
   open = state
+  -- Focus only while typing — like stock chat (messages stay visible without mouse)
   SetNuiFocus(state, state)
   SetNuiFocusKeepInput(false)
   SendNUIMessage({ action = state and 'open' or 'close' })
@@ -15,6 +16,10 @@ RegisterNetEvent('sync:chat:history', function(list)
   SendNUIMessage({ action = 'history', messages = list or {} })
 end)
 
+RegisterNetEvent('sync:chat:channels', function(list)
+  SendNUIMessage({ action = 'channels', channels = list or {} })
+end)
+
 RegisterNUICallback('close', function(_, cb)
   setOpen(false)
   cb({ ok = true })
@@ -25,7 +30,15 @@ RegisterNUICallback('send', function(data, cb)
   cb({ ok = true })
 end)
 
+RegisterNUICallback('requestChannels', function(_, cb)
+  TriggerServerEvent('sync:chat:requestChannels')
+  cb({ ok = true })
+end)
+
 RegisterCommand('+syncchat', function()
+  if IsPauseMenuActive() then
+    return
+  end
   if open then
     setOpen(false)
   else
@@ -37,7 +50,6 @@ RegisterCommand('-syncchat', function() end, false)
 
 RegisterKeyMapping('+syncchat', 'SyncRP чат', 'keyboard', 'T')
 
--- Soft-disable default GTA text chat entry while our chat owns T
 CreateThread(function()
   SetTextChatEnabled(false)
   TriggerServerEvent('sync:chat:requestHistory')
@@ -49,7 +61,7 @@ AddEventHandler('onResourceStop', function(res)
   end
 end)
 
--- Bridge legacy chat:addMessage → SyncRP chat UI
+-- Bridge legacy chat:addMessage → SyncRP feed (still transparent overlay)
 AddEventHandler('chat:addMessage', function(payload)
   if type(payload) ~= 'table' then
     return
@@ -63,7 +75,7 @@ AddEventHandler('chat:addMessage', function(payload)
   SendNUIMessage({
     action = 'message',
     message = {
-      ts = GetCloudTimeAsInt and (GetCloudTimeAsInt() * 1000) or nil,
+      ts = GetGameTimer() + 0,
       channel = 'system',
       tag = 'Система',
       tagColor = '#fbbf24',
@@ -76,4 +88,4 @@ AddEventHandler('chat:addMessage', function(payload)
   })
 end)
 
-print('[sync_chat] client loaded — T to open')
+print('[sync_chat] client loaded — T opens input (native-style feed)')

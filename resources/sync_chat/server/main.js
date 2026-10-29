@@ -4,6 +4,11 @@
 const history = [];
 const MAX_HISTORY = 80;
 
+/** @type {Map<number, Array<{id:string,label?:string,color?:string}>>} */
+const membershipChannels = new Map();
+
+const BASE_CHANNEL_IDS = new Set(['global', 'ooc']);
+
 function pushHistory(msg) {
   history.push(msg);
   if (history.length > MAX_HISTORY) history.shift();
@@ -27,9 +32,49 @@ function rollTry() {
   return Math.random() < 0.5;
 }
 
+function channelsFor(source) {
+  // Membership-only extras (faction/family/trade/admin). Base tabs are client-side.
+  return membershipChannels.get(Number(source)) || [];
+}
+
+function sendChannels(source) {
+  emitNet('sync:chat:channels', source, channelsFor(source));
+}
+
+/**
+ * Other resources unlock tabs when player joins org:
+ *   exports.sync_chat.setChannels(source, [{ id: 'faction', label: 'LSPD' }])
+ */
+exports('setChannels', (source, channels) => {
+  const src = Number(source);
+  const list = Array.isArray(channels)
+    ? channels
+        .filter((c) => c && c.id && !BASE_CHANNEL_IDS.has(String(c.id)))
+        .map((c) => ({
+          id: String(c.id),
+          label: c.label ? String(c.label) : undefined,
+          color: c.color ? String(c.color) : undefined,
+        }))
+    : [];
+  membershipChannels.set(src, list);
+  sendChannels(src);
+  return true;
+});
+
+exports('getChannels', (source) => channelsFor(source));
+
 onNet('sync:chat:requestHistory', () => {
   const src = global.source;
   emitNet('sync:chat:history', src, history.slice(-40));
+  sendChannels(src);
+});
+
+onNet('sync:chat:requestChannels', () => {
+  sendChannels(global.source);
+});
+
+on('playerDropped', () => {
+  membershipChannels.delete(Number(global.source));
 });
 
 onNet('sync:chat:send', (payload) => {
@@ -44,6 +89,22 @@ onNet('sync:chat:send', (payload) => {
 
   const name = playerLabel(src);
   const channel = String(payload.channel || 'global');
+  const unlocked = new Set(['global', 'ooc', ...channelsFor(src).map((c) => c.id)]);
+
+  // Gate membership channels until unlocked
+  if (['faction', 'family', 'trade', 'admin'].includes(channel) && !unlocked.has(channel)) {
+    emitNet('sync:chat:message', src, {
+      ts: Date.now(),
+      channel: 'system',
+      tag: 'Система',
+      tagColor: '#fbbf24',
+      text: 'Этот канал пока недоступен.',
+      textColor: '#fde68a',
+      kind: 'system',
+    });
+    return;
+  }
+
   const base = {
     ts: Date.now(),
     channel,
@@ -100,6 +161,18 @@ onNet('sync:chat:send', (payload) => {
       };
       break;
     case 'fb':
+      if (!unlocked.has('faction')) {
+        emitNet('sync:chat:message', src, {
+          ts: Date.now(),
+          channel: 'system',
+          tag: 'Система',
+          tagColor: '#fbbf24',
+          text: 'Вы не состоите во фракции.',
+          textColor: '#fde68a',
+          kind: 'system',
+        });
+        return;
+      }
       msg = {
         ...base,
         channel: 'faction',
@@ -110,23 +183,26 @@ onNet('sync:chat:send', (payload) => {
       };
       break;
     case 'radio':
-      msg = {
-        ...base,
-        channel: 'faction',
-        tag: 'R',
-        tagColor: '#4ade80',
-        text,
-        textColor: '#bbf7d0',
-      };
-      break;
     case 'dept':
+      if (!unlocked.has('faction')) {
+        emitNet('sync:chat:message', src, {
+          ts: Date.now(),
+          channel: 'system',
+          tag: 'Система',
+          tagColor: '#fbbf24',
+          text: 'Рация фракции недоступна.',
+          textColor: '#fde68a',
+          kind: 'system',
+        });
+        return;
+      }
       msg = {
         ...base,
         channel: 'faction',
-        tag: 'D',
-        tagColor: '#67e8f9',
+        tag: kind === 'radio' ? 'R' : 'D',
+        tagColor: kind === 'radio' ? '#4ade80' : '#67e8f9',
         text,
-        textColor: '#a5f3fc',
+        textColor: kind === 'radio' ? '#bbf7d0' : '#a5f3fc',
       };
       break;
     case 'shout':
@@ -176,18 +252,17 @@ onNet('sync:chat:send', (payload) => {
     default:
       msg = {
         ...base,
-        tag: 'Общий',
-        tagColor: '#60a5fa',
-        text,
-        textColor: '#e8eef8',
+        channel: channel === 'ooc' ? 'ooc' : 'global',
+        tag: channel === 'ooc' ? 'OOC' : 'Общий',
+        tagColor: channel === 'ooc' ? '#94a3b8' : '#60a5fa',
+        text: channel === 'ooc' ? `(( ${text} ))` : text,
+        textColor: channel === 'ooc' ? '#cbd5e1' : '#f3f6fb',
       };
   }
 
   broadcast(msg);
-  console.log(`[sync_chat] ${kind} src=${src} ${name}: ${text.slice(0, 80)}`);
 });
 
-// Hook SyncRP notify-style messages from other resources via event
 on('sync:chat:system', (text) => {
   broadcast({
     ts: Date.now(),

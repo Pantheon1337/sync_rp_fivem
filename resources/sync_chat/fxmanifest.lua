@@ -4,7 +4,7 @@ game 'gta5'
 name 'sync_chat'
 author 'SyncRP'
 description 'SyncRP glass chat — channels, RP commands, settings'
-version '0.1.0'
+version '0.1.1'
 
 node_version '22'
 

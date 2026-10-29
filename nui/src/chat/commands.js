@@ -1,6 +1,11 @@
-export const CHANNELS = [
+/** Always available (not membership-gated). */
+export const BASE_CHANNELS = [
   { id: 'global', label: 'Общий', color: '#60a5fa' },
-  { id: 'ooc', label: 'OOC', color: '#c084fc' },
+  { id: 'ooc', label: 'OOC', color: '#94a3b8' },
+];
+
+/** Unlocked later by server when player joins faction/family/etc. */
+export const MEMBERSHIP_CHANNELS = [
   { id: 'faction', label: 'Фракция', color: '#38bdf8' },
   { id: 'family', label: 'Семья', color: '#34d399' },
   { id: 'trade', label: 'Торговля', color: '#fbbf24' },
@@ -16,7 +21,7 @@ export const COMMANDS = [
   { cmd: '/r', desc: 'Рация', tag: 'R', color: '#4ade80', kind: 'radio' },
   { cmd: '/d', desc: 'Департамент', tag: 'D', color: '#67e8f9', kind: 'dept' },
   { cmd: '/s', desc: 'Крик', tag: 'S', color: '#fbbf24', kind: 'shout' },
-  { cmd: '/w', desc: 'Шёпот игроку: /w id текст', tag: 'W', color: '#fde047', kind: 'whisper' },
+  { cmd: '/w', desc: 'Шёпот: /w id текст', tag: 'W', color: '#fde047', kind: 'whisper' },
   { cmd: '/advert', desc: 'Реклама', tag: 'ADS', color: '#facc15', kind: 'advert' },
 ];
 
@@ -57,4 +62,18 @@ export function filterSuggestions(input) {
   if (!input.startsWith('/')) return [];
   const q = input.toLowerCase();
   return COMMANDS.filter((c) => c.cmd.startsWith(q) || q === '/');
+}
+
+export function mergeChannels(extra = []) {
+  const map = new Map(BASE_CHANNELS.map((c) => [c.id, c]));
+  for (const c of extra) {
+    if (!c || !c.id) continue;
+    const known = MEMBERSHIP_CHANNELS.find((m) => m.id === c.id);
+    map.set(c.id, {
+      id: c.id,
+      label: c.label || known?.label || c.id,
+      color: c.color || known?.color || '#60a5fa',
+    });
+  }
+  return [...map.values()];
 }

@@ -12,7 +12,7 @@
 | Character UI | list / create / select / delete |
 | Auth UX | license → account → регистрация/вход персонажа (без email/пароля) |
 | Appearance | плиточный редактор (лицо/волосы/одежда/props) + SyncRP scrollbar |
-| Chat | `sync_chat` — glass UI по макету, каналы, /me /do /try, настройки |
+| Chat | `sync_chat` — прозрачный оверлей как stock FiveM; вкладки фракции/семьи только по членству |
 | Position | autosave + flush в `characters.position_*` на disconnect |
 | Chat commands | fallback персонажей: `/chars`, `/charsui` |
 
