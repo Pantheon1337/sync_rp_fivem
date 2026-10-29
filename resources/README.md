@@ -1,26 +1,20 @@
 # FiveM resources (SyncRP)
 
-## Stage 1
+## Ensure order
 
-| Resource        | Роль                           |
-| --------------- | ------------------------------ |
-| `sync_db`       | MariaDB pool                   |
-| `sync_identity` | accounts + identifiers         |
-| `sync_sessions` | sessions                       |
-| `sync_core`     | lifecycle + `requireCharacter` |
+```
+sync_db → sync_identity → sync_sessions → sync_core
+→ sync_characters → sync_spawn → sync_nui
+```
 
-## Stage 2
+Копируйте ресурсы **внутрь** `server-data/resources/` (не junction).
 
-| Resource          | Роль                                             |
-| ----------------- | ------------------------------------------------ |
-| `sync_characters` | create/list/select/soft-delete (+ chat commands) |
-| `sync_spawn`      | spawn after select                               |
+## Stage map
 
-**Ensure order:**  
-`sync_db` → `sync_identity` → `sync_sessions` → `sync_core` → `sync_characters` → `sync_spawn`
+| Resource | Stage |
+|----------|-------|
+| sync_db / identity / sessions / core | 1 |
+| sync_characters / sync_spawn | 2 |
+| sync_nui | 3 |
 
-Копируйте ресурсы **внутрь** `server-data/resources/` (не junction — sandbox FiveM).
-
-## Далее
-
-`sync_nui` (Stage 3), `sync_economy` (4), …
+NUI source: `/nui` — build into `sync_nui/html` before deploy.

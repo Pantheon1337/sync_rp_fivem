@@ -11,6 +11,8 @@ docker/.env
 .DS_Store
 playwright-report/
 test-results/
+nui/test-results/
+nui/playwright-report/
 .fxserver/
 cache/
 # FiveM / local server artifacts

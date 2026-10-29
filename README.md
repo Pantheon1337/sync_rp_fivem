@@ -4,8 +4,8 @@
 
 SyncRP строится на **собственном SyncCore** — модульной архитектуре без QBCore / ESX / Qbox в качестве фундамента. Игровая логика выполняется на FXServer; внешние API не используются для каждой игровой механики.
 
-> **Текущий статус:** Stage 1 **пройден на FX**. В разработке **Stage 2** (characters + spawn).  
-> **Ветка:** `cursor/stage-2-characters-spawn-5b89` · [SPRINT2.md](docs/SPRINT2.md)
+> **Текущий статус:** Stage 2 smoke OK. В разработке **Stage 3** (NUI character UI).  
+> **Ветка:** `cursor/stage-3-nui-characters-5b89` · [SPRINT3.md](docs/SPRINT3.md)
 
 ## Стек
 

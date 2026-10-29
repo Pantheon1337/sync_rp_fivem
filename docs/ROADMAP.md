@@ -48,7 +48,7 @@ PO: Pantheon Ai. Следующий этап не стартует без под
 
 ---
 
-## Stage 2 — Characters & spawn _(in progress)_
+## Stage 2 — Characters & spawn
 
 **Depends:** Stage 1 (FX F1–F3 OK).  
 **Scope:** `sync_characters`, `sync_spawn`; character select flow; slot limits; chat UX до Stage 3 NUI.  
@@ -57,11 +57,12 @@ PO: Pantheon Ai. Следующий этап не стартует без под
 
 ---
 
-## Stage 3 — NUI shell
+## Stage 3 — NUI shell *(in progress)*
 
 **Depends:** Stage 2.  
 **Scope:** React+Vite+Tailwind+Zustand в `nui/`; `sync_nui`; RU strings; design tokens из UI_DESIGN_SYSTEM.  
-**DoD:** character UI через NUI; Playwright smoke на static build; тема dark glass + blue.
+**DoD:** character UI через NUI; Playwright smoke на static build; тема dark glass + blue.  
+**Детали:** [SPRINT3.md](./SPRINT3.md).
 
 ---
 

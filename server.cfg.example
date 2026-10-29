@@ -28,6 +28,7 @@ ensure sync_sessions
 ensure sync_core
 ensure sync_characters
 ensure sync_spawn
+ensure sync_nui
 
 # sv_licenseKey "CHANGEME"
 

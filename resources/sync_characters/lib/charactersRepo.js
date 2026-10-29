@@ -68,7 +68,9 @@ function createCharactersRepo(db, options = {}) {
     const lastName = normalizeName(input.lastName);
     const gender = normalizeGender(input.gender);
     const dateOfBirth = normalizeDob(input.dateOfBirth || '1995-01-01');
-    const model = input.model || (gender === 'female' ? 'mp_f_freemode_01' : 'mp_m_freemode_01');
+    // Story peds until appearance editor (freemode without outfit looks "empty")
+    const model =
+      input.model || (gender === 'female' ? 'a_f_y_hipster_01' : 'a_m_y_hipster_01');
 
     const existing = await listByAccount(accountId);
     const slot = nextFreeSlot(

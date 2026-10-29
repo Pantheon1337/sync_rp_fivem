@@ -1,9 +1,12 @@
-# NUI apps (SyncRP)
+# SyncRP NUI
 
-Stage 0 skeleton. Real React + Vite + Tailwind + Zustand app starts in **Stage 3**.
+React + Vite + Tailwind + Zustand. Design: `docs/UI_DESIGN_SYSTEM.md`.
 
-- Design tokens: `docs/UI_DESIGN_SYSTEM.md`
-- Bridge resource: `sync_nui` (planned)
-- Default locale: `ru`
+```bash
+npm ci
+npm run build      # → resources/sync_nui/html
+npm run dev        # browser mock
+npm run test:e2e   # Playwright after build
+```
 
-Do not commit production secrets into frontend env.
+Русский UI по умолчанию. Brand: **SyncRP**, dark glass + blue accents.

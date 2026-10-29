@@ -1,6 +1,6 @@
 # SyncRP UI Design System (NUI)
 
-Статус: **Stage 0 tokens & rules**. Реализация React NUI — Stage 3+.
+Статус: **Stage 3** — токены реализованы в `nui/` + `sync_nui`.
 
 Русский язык — **default** для всего UI.
 
