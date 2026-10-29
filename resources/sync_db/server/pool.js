@@ -1,13 +1,17 @@
 'use strict';
 
+const path = require('path');
 const mysql = require('mysql2/promise');
-const { parseDsn } = require('../lib/parseDsn.js');
+
+const root = GetResourcePath(GetCurrentResourceName());
+const { parseDsn } = require(path.join(root, 'lib', 'parseDsn.js'));
 
 /** @type {import('mysql2/promise').Pool | null} */
 let pool = null;
 
 function resolveDsn() {
-  const fromConvar = typeof GetConvar === 'function' ? GetConvar('sync_db_dsn', '') : '';
+  const fromConvar =
+    typeof GetConvar === 'function' ? GetConvar('sync_db_dsn', '') : '';
   return fromConvar || process.env.SYNC_DB_DSN || '';
 }
 

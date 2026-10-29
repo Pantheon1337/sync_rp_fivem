@@ -1,6 +1,8 @@
 'use strict';
 
-const { createPlayerRegistry } = require('../lib/context.js');
+const path = require('path');
+const root = GetResourcePath(GetCurrentResourceName());
+const { createPlayerRegistry } = require(path.join(root, 'lib', 'context.js'));
 
 const registry = createPlayerRegistry();
 let bootOk = false;
@@ -31,7 +33,8 @@ async function registerPlayer(source) {
   if (resolved.status !== 'active') {
     throw new Error(`account status=${resolved.status}`);
   }
-  const endpoint = typeof GetPlayerEndpoint === 'function' ? GetPlayerEndpoint(String(source)) : '';
+  const endpoint =
+    typeof GetPlayerEndpoint === 'function' ? GetPlayerEndpoint(String(source)) : '';
   const session = await exports.sync_sessions.openSession(
     resolved.accountId,
     Number(source),
@@ -43,7 +46,11 @@ async function registerPlayer(source) {
     characterId: null,
     locale: resolved.locale || 'ru',
   });
-  emit('sync:core:playerRegistered', { source: Number(source), ...ctx, created: resolved.created });
+  emit('sync:core:playerRegistered', {
+    source: Number(source),
+    ...ctx,
+    created: resolved.created,
+  });
   console.log(
     `[sync_core] registered source=${source} account=${ctx.accountId} session=${ctx.sessionId} created=${resolved.created}`,
   );

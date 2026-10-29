@@ -1,7 +1,17 @@
 'use strict';
 
+const path = require('path');
 const { randomUUID } = require('node:crypto');
-const { normalizeIdentifierList, sortByPriority } = require('./identifiers.js');
+
+// FiveM resolves relative require() from resource root; use absolute when available.
+function loadIdentifiers() {
+  if (typeof GetResourcePath === 'function' && typeof GetCurrentResourceName === 'function') {
+    return require(path.join(GetResourcePath(GetCurrentResourceName()), 'lib', 'identifiers.js'));
+  }
+  return require('./identifiers.js');
+}
+
+const { normalizeIdentifierList, sortByPriority } = loadIdentifiers();
 
 /**
  * @param {{ query: Function, transaction: Function }} db

@@ -1,6 +1,8 @@
 'use strict';
 
-const { resolveAccount } = require('../lib/resolveAccount.js');
+const path = require('path');
+const root = GetResourcePath(GetCurrentResourceName());
+const { resolveAccount } = require(path.join(root, 'lib', 'resolveAccount.js'));
 
 function db() {
   return {

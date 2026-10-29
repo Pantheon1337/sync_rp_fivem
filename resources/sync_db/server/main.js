@@ -1,6 +1,10 @@
 'use strict';
 
-const { initPool, query, transaction, healthcheck, isReady } = require('./pool.js');
+const path = require('path');
+const root = GetResourcePath(GetCurrentResourceName());
+const { initPool, query, transaction, healthcheck, isReady } = require(
+  path.join(root, 'server', 'pool.js'),
+);
 
 let ready = false;
 

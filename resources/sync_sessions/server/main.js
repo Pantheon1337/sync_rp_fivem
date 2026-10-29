@@ -1,7 +1,9 @@
 'use strict';
 
+const path = require('path');
 const { createHash } = require('node:crypto');
-const { createSessionTracker } = require('../lib/sessionState.js');
+const root = GetResourcePath(GetCurrentResourceName());
+const { createSessionTracker } = require(path.join(root, 'lib', 'sessionState.js'));
 
 const tracker = createSessionTracker();
 
@@ -24,7 +26,6 @@ async function openSession(accountId, serverId, endpoint) {
      VALUES (?, NULL, ?, ?)`,
     [accountId, serverId, endpointHash],
   );
-  // mysql2 execute returns ResultSetHeader for INSERT when using pool.execute via sync_db.query
   const sessionId = Number(rows.insertId);
   tracker.open(serverId, sessionId, accountId);
   emit('sync:sessions:opened', { sessionId, accountId, serverId });
@@ -34,7 +35,6 @@ async function openSession(accountId, serverId, endpoint) {
 async function closeSession(serverId, reason) {
   const mem = tracker.close(serverId);
   if (mem.missing || mem.alreadyClosed) {
-    // Still try DB idempotent close by open row for this server_id
     await exports.sync_db.query(
       `UPDATE sessions SET disconnected_at = UTC_TIMESTAMP(3), disconnect_reason = ?
        WHERE server_id = ? AND disconnected_at IS NULL`,
