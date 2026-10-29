@@ -23,6 +23,8 @@ Cloud Agent / CI FXServer **не** запускают — FiveM-проверки
 
 Репозиторий: `https://github.com/Pantheon1337/sync_rp_fivem`
 
+**Windows (раскладка `F:\SyncRP2.0`):** пошагово с нуля — [FXSERVER_WINDOWS_QUICKSTART.md](./FXSERVER_WINDOWS_QUICKSTART.md).
+
 ---
 
 ## 1. Выгрузить изменения с GitHub
