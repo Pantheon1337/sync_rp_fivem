@@ -197,11 +197,20 @@ onNet('sync:characters:list', async (reqId) => {
   }
 });
 
+function clientError(err) {
+  const raw = err && err.message ? String(err.message) : String(err || 'error');
+  return raw.replace(/^sync_characters:\s*/i, '') || 'Не удалось создать персонажа';
+}
+
 onNet('sync:characters:create', async (payload, reqId) => {
   const src = global.source;
   try {
     const ctx = requireCtx(src);
-    const ch = await createCharacter(ctx.accountId, payload || {});
+    const body = payload && typeof payload === 'object' ? payload : {};
+    console.log(
+      `[sync_characters] create request source=${src} name=${body.firstName || '?'} ${body.lastName || '?'}`,
+    );
+    const ch = await createCharacter(ctx.accountId, body);
     emit('sync:characters:created', { source: Number(src), character: ch });
     emitNet(
       'sync:characters:createResult',
@@ -209,10 +218,14 @@ onNet('sync:characters:create', async (payload, reqId) => {
       withReq({ ok: true, character: ch }, reqId),
     );
   } catch (err) {
+    console.error(
+      '[sync_characters] create failed:',
+      err && err.stack ? err.stack : err && err.message ? err.message : err,
+    );
     emitNet(
       'sync:characters:createResult',
       src,
-      withReq({ ok: false, error: err && err.message ? err.message : 'error' }, reqId),
+      withReq({ ok: false, error: clientError(err) }, reqId),
     );
   }
 });

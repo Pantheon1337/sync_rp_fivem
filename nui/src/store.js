@@ -97,17 +97,29 @@ export const useSyncStore = create((set, get) => ({
     set({ loading: true, error: null });
     const res = await nuiFetch('createCharacter', payload);
     if (!res?.ok) {
-      set({ loading: false, error: res?.error || 'Ошибка создания' });
+      set({
+        loading: false,
+        error: res?.error || 'Не удалось создать персонажа. Проверьте имя и дату рождения.',
+      });
       return false;
     }
     const character = res.character;
-    await get().refreshList();
-    set({ loading: false, selectedId: character?.id || null, forceCreate: false, isNewAccount: false });
-    if (character?.id) {
-      get().openAppearance(character, character.appearance);
-      return true;
+    if (!character?.id) {
+      set({ loading: false, error: 'Сервер не вернул персонажа' });
+      return false;
     }
-    set({ view: 'list' });
+    // Open appearance first so refreshList cannot yank view back to list/create.
+    get().openAppearance(character, character.appearance || null);
+    set({ loading: false, selectedId: character.id, forceCreate: false, isNewAccount: false });
+    try {
+      await get().refreshList();
+    } catch {
+      /* list refresh is best-effort after create */
+    }
+    // Keep appearance view even if list refresh tried to change it.
+    if (get().view !== 'appearance') {
+      get().openAppearance(character, character.appearance || null);
+    }
     return true;
   },
 

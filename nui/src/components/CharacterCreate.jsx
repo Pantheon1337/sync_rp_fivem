@@ -19,6 +19,7 @@ export function CharacterCreate() {
   const [dateOfBirth, setDob] = useState('1995-01-01');
   const [heightCm, setHeightCm] = useState(HEIGHT_DEFAULT);
   const [fieldError, setFieldError] = useState('');
+  const storeError = useSyncStore((s) => s.error);
 
   const registration = isNewAccount || forceCreate || characters.length === 0;
   const canGoBack = !forceCreate && !isNewAccount && characters.length > 0;
@@ -26,14 +27,20 @@ export function CharacterCreate() {
   async function onSubmit(e) {
     e.preventDefault();
     setFieldError('');
+    const fn = firstName.trim();
+    const ln = lastName.trim();
+    if (fn.length < 2 || ln.length < 2) {
+      setFieldError('Имя и фамилия — минимум 2 буквы');
+      return;
+    }
     const h = Number(heightCm);
     if (!Number.isFinite(h) || h < HEIGHT_MIN || h > HEIGHT_MAX) {
       setFieldError(`Рост: ${HEIGHT_MIN}–${HEIGHT_MAX} см`);
       return;
     }
     const ok = await createCharacter({
-      firstName,
-      lastName,
+      firstName: fn,
+      lastName: ln,
       gender,
       dateOfBirth,
       heightCm: Math.round(h),
@@ -123,7 +130,9 @@ export function CharacterCreate() {
         </label>
       </div>
 
-      {fieldError ? <p className="mt-3 text-sm text-sync-danger">{fieldError}</p> : null}
+      {fieldError || storeError ? (
+        <p className="mt-3 text-sm text-sync-danger">{fieldError || storeError}</p>
+      ) : null}
 
       <div className="mt-6 flex flex-wrap gap-3">
         <button type="submit" className="sync-btn sync-btn-primary" disabled={loading}>

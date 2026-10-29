@@ -117,30 +117,23 @@ function createCharactersRepo(db, options = {}) {
     }
 
     const uuid = randomUUID();
-    let insertId;
+    // Insert without height_cm so pre-005 DBs keep working; then best-effort UPDATE.
+    const result = await db.transaction([
+      {
+        sql: `INSERT INTO characters
+          (uuid, account_id, slot, first_name, last_name, date_of_birth, gender, model, appearance_json)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+        params: [uuid, accountId, slot, firstName, lastName, dateOfBirth, gender, model],
+      },
+    ]);
+    const insertId = Number(result[0].insertId);
     try {
-      const result = await db.transaction([
-        {
-          sql: `INSERT INTO characters
-            (uuid, account_id, slot, first_name, last_name, date_of_birth, gender, height_cm, model, appearance_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
-          params: [uuid, accountId, slot, firstName, lastName, dateOfBirth, gender, heightCm, model],
-        },
+      await db.query(`UPDATE characters SET height_cm = ? WHERE id = ? AND deleted_at IS NULL`, [
+        heightCm,
+        insertId,
       ]);
-      insertId = Number(result[0].insertId);
-    } catch (err) {
-      // Pre-005 schema without height_cm — still create; migrate 005 when ready.
-      const msg = err && err.message ? String(err.message) : String(err);
-      if (!/height_cm/i.test(msg) && !/Unknown column/i.test(msg)) throw err;
-      const result = await db.transaction([
-        {
-          sql: `INSERT INTO characters
-            (uuid, account_id, slot, first_name, last_name, date_of_birth, gender, model, appearance_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
-          params: [uuid, accountId, slot, firstName, lastName, dateOfBirth, gender, model],
-        },
-      ]);
-      insertId = Number(result[0].insertId);
+    } catch {
+      // Column missing until migration 005_character_height — character still created.
     }
     return get(insertId);
   }
