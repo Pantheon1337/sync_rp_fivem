@@ -24,9 +24,19 @@ SyncRP: свой NUI (dark glass), свой ledger (`sync_economy`). Чужие 
 
 Пока stub `**** ----`. Постоянная выдача — **Stage 16** (см. ROADMAP).
 
+## Карта (blips)
+
+| | |
+|--|--|
+| Sprite | **605** — `radar_nhp_starterpack` |
+| Docs | https://docs.fivem.net/docs/game-references/blips/ |
+| Config | `locations.json` → `blip.sprite` / `showBanks` / `showAtms` |
+
+Не забывать: любые новые отделения/ATM в конфиге автоматически получают этот blip.
+
 ## PO smoke
 
-1. На карте зелёные blip банков (Fleeca Legion Square рядом со спавном).
+1. На карте blip **605** у банков и ATM (Fleeca Legion Square рядом со спавном).
 2. Подойти → подсказка **E — Банк** → тот же UI.
 3. Любой стримящийся ATM prop → **E — Банкомат**.
 4. Вдали от точек F6 не открывает (без remote convar).

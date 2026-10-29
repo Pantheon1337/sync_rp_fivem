@@ -190,24 +190,53 @@ RegisterNetEvent('sync:bank:transferResult', function(result)
   })
 end)
 
+--- Blip 605 = radar_nhp_starterpack (docs.fivem.net/docs/game-references/blips/)
+local function addMapBlip(x, y, z, label, scale)
+  local style = cfg.blip or {}
+  local sprite = tonumber(style.sprite) or 605
+  local colour = tonumber(style.colour) or 2
+  local blip = AddBlipForCoord(x + 0.0, y + 0.0, z + 0.0)
+  SetBlipSprite(blip, sprite)
+  SetBlipColour(blip, colour)
+  SetBlipScale(blip, scale or 0.8)
+  SetBlipAsShortRange(blip, style.shortRange ~= false)
+  BeginTextCommandSetBlipName('STRING')
+  AddTextComponentSubstringPlayerName(label or 'Банк')
+  EndTextCommandSetBlipName(blip)
+  blips[#blips + 1] = blip
+  return blip
+end
+
 local function setupBlips()
   for _, b in ipairs(blips) do
     if DoesBlipExist(b) then RemoveBlip(b) end
   end
   blips = {}
-  for _, bank in ipairs(cfg.banks or {}) do
-    if bank.blip then
-      local blip = AddBlipForCoord(bank.x + 0.0, bank.y + 0.0, bank.z + 0.0)
-      SetBlipSprite(blip, 108)
-      SetBlipColour(blip, 2)
-      SetBlipScale(blip, 0.75)
-      SetBlipAsShortRange(blip, true)
-      BeginTextCommandSetBlipName('STRING')
-      AddTextComponentSubstringPlayerName(bank.label or 'Банк')
-      EndTextCommandSetBlipName(blip)
-      blips[#blips + 1] = blip
+  local style = cfg.blip or {}
+  local showBanks = style.showBanks ~= false
+  local showAtms = style.showAtms ~= false
+
+  if showBanks then
+    for _, bank in ipairs(cfg.banks or {}) do
+      if bank.blip ~= false then
+        addMapBlip(bank.x, bank.y, bank.z, bank.label or 'Банк', style.scaleBank or 0.85)
+      end
     end
   end
+
+  if showAtms then
+    for _, atm in ipairs(cfg.atms or {}) do
+      if atm.blip ~= false then
+        addMapBlip(atm.x, atm.y, atm.z, atm.label or 'Банкомат', style.scaleAtm or 0.65)
+      end
+    end
+  end
+
+  print(('[sync_bank] blips sprite=%s banks=%s atms=%s'):format(
+    tostring((style.sprite) or 605),
+    tostring(showBanks and #(cfg.banks or {}) or 0),
+    tostring(showAtms and #(cfg.atms or {}) or 0)
+  ))
 end
 
 local function drawPrompt(spot)
