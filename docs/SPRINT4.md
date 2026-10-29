@@ -21,22 +21,30 @@
 
 ## Deploy
 
+### Быстрый путь (рекомендуется) — без полного рестарта FX
+
 ```powershell
 cd F:\SyncRP2.0\sync_rp_fivem
-git pull origin cursor/stage-4-economy-hud-5b89
-# при конфликте html:
-git checkout -- resources/sync_hud/html resources/sync_bank/html
-$env:SYNC_DB_DSN="mysql://syncrp:ВАШ_ПАРОЛЬ@127.0.0.1:3306/syncrp"
-npm.cmd run migrate
-cd nui && npm.cmd ci && npm.cmd run build:hud && npm.cmd run build:bank && cd ..
+# HUD-фикс:
+.\scripts\deploy-po.ps1 -Targets hud
 
-xcopy /E /I /Y resources\sync_economy F:\SyncRP2.0\sync\resources\sync_economy
-xcopy /E /I /Y resources\sync_hud     F:\SyncRP2.0\sync\resources\sync_hud
-xcopy /E /I /Y resources\sync_bank    F:\SyncRP2.0\sync\resources\sync_bank
-xcopy /E /I /Y resources\sync_db      F:\SyncRP2.0\sync\resources\sync_db
+# Stage 4 целиком (+ migrate один раз):
+.\scripts\deploy-po.ps1 -Targets hud,bank,economy -Migrate `
+  -Dsn "mysql://syncrp:ВАШ_ПАРОЛЬ@127.0.0.1:3306/syncrp"
 ```
 
-В `server.cfg` после `sync_chat`:
+В консоли FX / txAdmin Live Console:
+
+```
+exec syncrp-hotreload.cfg
+```
+
+Скрипт сам сбрасывает локальные `html` перед `git pull` (больше не будет abort из‑за Vite).  
+Подробности: [scripts/README.md](../scripts/README.md).
+
+### Первый раз — `server.cfg`
+
+После `sync_chat`:
 
 ```cfg
 ensure sync_economy
@@ -44,7 +52,7 @@ ensure sync_hud
 ensure sync_bank
 ```
 
-Полный рестарт FXServer.
+Полный рестарт FX нужен только при первом добавлении ресурсов / миграции / правках core.
 
 ## PO test
 

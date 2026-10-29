@@ -210,21 +210,18 @@ WHERE disconnected_at IS NULL;
 
 Полный чеклист: [SPRINT4.md](./SPRINT4.md). Ветка: `cursor/stage-4-economy-hud-5b89`.
 
+**Автодеплой** (сброс html → pull → build → xcopy → hot-reload cfg):
+
 ```powershell
 cd F:\SyncRP2.0\sync_rp_fivem
-git pull origin cursor/stage-4-economy-hud-5b89
-# при конфликте html:
-git checkout -- resources/sync_hud/html resources/sync_bank/html
-$env:SYNC_DB_DSN="mysql://syncrp:ВАШ_ПАРОЛЬ@127.0.0.1:3306/syncrp"
-npm.cmd run migrate
-cd nui && npm.cmd ci && npm.cmd run build:hud && npm.cmd run build:bank && cd ..
-xcopy /E /I /Y resources\sync_economy F:\SyncRP2.0\sync\resources\sync_economy
-xcopy /E /I /Y resources\sync_hud     F:\SyncRP2.0\sync\resources\sync_hud
-xcopy /E /I /Y resources\sync_bank    F:\SyncRP2.0\sync\resources\sync_bank
-xcopy /E /I /Y resources\sync_db      F:\SyncRP2.0\sync\resources\sync_db
+.\scripts\deploy-po.ps1 -Targets hud,bank,economy -Migrate `
+  -Dsn "mysql://syncrp:ВАШ_ПАРОЛЬ@127.0.0.1:3306/syncrp"
 ```
 
-В `server.cfg` после chat: `ensure sync_economy`, `ensure sync_hud`, `ensure sync_bank`.  
+В txAdmin Live Console / консоли FX: `exec syncrp-hotreload.cfg`  
+(полный рестарт FX не нужен для правок HUD/NUI). См. [scripts/README.md](../scripts/README.md).
+
+В `server.cfg` после chat (один раз): `ensure sync_economy`, `ensure sync_hud`, `ensure sync_bank`.  
 В игре: HUD справа (cash/bank); **F6** или `/bank`.
 
 ---
