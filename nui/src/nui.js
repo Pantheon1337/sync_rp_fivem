@@ -4,21 +4,40 @@ const resourceName =
     ? window.GetParentResourceName()
     : 'sync_nui';
 
+const FETCH_TIMEOUT_MS = 12000;
+
 export async function nuiFetch(event, data = {}) {
   if (!isBrowser) return { ok: false, error: 'no-window' };
   // Browser / Playwright outside FiveM: mock
   if (!window.invokeNative) {
     return mockNui(event, data);
   }
-  const res = await fetch(`https://${resourceName}/${event}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-    body: JSON.stringify(data),
-  });
+
+  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = ctrl
+    ? setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS)
+    : null;
+
   try {
-    return await res.json();
-  } catch {
-    return { ok: false, error: 'bad-json' };
+    const res = await fetch(`https://${resourceName}/${event}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify(data ?? {}),
+      signal: ctrl ? ctrl.signal : undefined,
+    });
+    try {
+      return await res.json();
+    } catch {
+      return { ok: false, error: 'bad-json' };
+    }
+  } catch (err) {
+    const aborted = err && err.name === 'AbortError';
+    return {
+      ok: false,
+      error: aborted ? 'Таймаут ответа NUI' : 'Ошибка связи с клиентом',
+    };
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 

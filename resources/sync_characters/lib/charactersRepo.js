@@ -13,6 +13,15 @@ function loadValidate() {
 
 const { normalizeName, normalizeGender, normalizeDob, nextFreeSlot } = loadValidate();
 
+function formatDob(value) {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
+  }
+  const s = String(value);
+  return s.length >= 10 ? s.slice(0, 10) : s;
+}
+
 function rowToCharacter(row) {
   if (!row) return null;
   return {
@@ -22,7 +31,7 @@ function rowToCharacter(row) {
     slot: Number(row.slot),
     firstName: row.first_name,
     lastName: row.last_name,
-    dateOfBirth: row.date_of_birth,
+    dateOfBirth: formatDob(row.date_of_birth),
     gender: row.gender,
     cash: Number(row.cash),
     bank: Number(row.bank),
@@ -35,7 +44,7 @@ function rowToCharacter(row) {
             z: Number(row.position_z),
             h: Number(row.position_h || 0),
           },
-    model: row.model,
+    model: row.model || null,
   };
 }
 

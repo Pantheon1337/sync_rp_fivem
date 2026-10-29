@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { onNuiMessage } from './nui';
 import { useSyncStore } from './store';
 import { CharacterSelect } from './components/CharacterSelect';
@@ -13,6 +13,7 @@ export default function App() {
   const forceCreate = useSyncStore((s) => s.forceCreate);
   const openShell = useSyncStore((s) => s.openShell);
   const refreshList = useSyncStore((s) => s.refreshList);
+  const refreshTimer = useRef(null);
 
   useEffect(() => {
     return onNuiMessage((data) => {
@@ -23,7 +24,11 @@ export default function App() {
           mustSelect: !!data.mustSelect,
           forceCreate: !!data.forceCreate,
         });
-        refreshList();
+        // Debounce: server may retry open; one list fetch avoids stuck NUI callbacks
+        if (refreshTimer.current) clearTimeout(refreshTimer.current);
+        refreshTimer.current = setTimeout(() => {
+          refreshList();
+        }, 150);
       }
       if (data.action === 'close') {
         useSyncStore.setState({ visible: false, mustSelect: false });
@@ -31,7 +36,6 @@ export default function App() {
     });
   }, [openShell, refreshList]);
 
-  // Vite/dev convenience
   useEffect(() => {
     if (import.meta.env.DEV && !window.invokeNative) {
       openShell({ isNewAccount: false, mustSelect: false });
@@ -75,7 +79,7 @@ export default function App() {
           <p className="mt-2 max-w-md text-sm text-sync-muted md:text-base">{subtitle}</p>
           {mustSelect && (
             <p className="mt-2 text-xs text-sync-subtle">
-              Закрыть экран нельзя, пока персонаж не выбран.
+              Пока меню открыто, чат (T) недоступен — так и задумано. Выберите персонажа.
             </p>
           )}
         </header>

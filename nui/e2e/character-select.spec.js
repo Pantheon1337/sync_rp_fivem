@@ -46,5 +46,5 @@ test('registration mode forces create for new account', async ({ page }) => {
   await expect(page.getByText('Регистрация персонажа')).toBeVisible();
   await expect(page.getByText('Создание персонажа')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Создать и войти' })).toBeVisible();
-  await expect(page.getByText(/Закрыть экран нельзя/)).toBeVisible();
+  await expect(page.getByText(/чат \(T\) недоступен/i)).toBeVisible();
 });

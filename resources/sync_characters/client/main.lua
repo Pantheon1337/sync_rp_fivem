@@ -1,4 +1,4 @@
--- Stage 2 temporary chat UX (RU). Full NUI in Stage 3.
+-- Chat fallback UX (RU). Primary UI is sync_nui.
 
 local function notify(msg)
   TriggerEvent('chat:addMessage', {
@@ -8,7 +8,15 @@ local function notify(msg)
   })
 end
 
+-- NUI requests carry reqId — ignore those here (sync_nui resolves them).
+local function fromNui(res)
+  return type(res) == 'table' and res.reqId ~= nil
+end
+
 RegisterNetEvent('sync:characters:listResult', function(res)
+  if fromNui(res) then
+    return
+  end
   if type(res) ~= 'table' or not res.ok then
     notify(('Список персонажей: %s'):format(res and res.error or 'ошибка'))
     return
@@ -36,6 +44,9 @@ RegisterNetEvent('sync:characters:listResult', function(res)
 end)
 
 RegisterNetEvent('sync:characters:createResult', function(res)
+  if fromNui(res) then
+    return
+  end
   if type(res) ~= 'table' or not res.ok then
     notify(('Создание: %s'):format(res and res.error or 'ошибка'))
     return
@@ -45,6 +56,9 @@ RegisterNetEvent('sync:characters:createResult', function(res)
 end)
 
 RegisterNetEvent('sync:characters:selectResult', function(res)
+  if fromNui(res) then
+    return
+  end
   if type(res) ~= 'table' or not res.ok then
     notify(('Выбор: %s'):format(res and res.error or 'ошибка'))
     return
@@ -54,6 +68,9 @@ RegisterNetEvent('sync:characters:selectResult', function(res)
 end)
 
 RegisterNetEvent('sync:characters:deleteResult', function(res)
+  if fromNui(res) then
+    return
+  end
   if type(res) ~= 'table' or not res.ok then
     notify(('Удаление: %s'):format(res and res.error or 'ошибка'))
     return
@@ -108,5 +125,5 @@ end, false)
 
 CreateThread(function()
   Wait(3000)
-  notify('Персонажи: NUI при входе · fallback /chars /charcreate /charselect /chardelete · /charsui')
+  notify('Персонажи: NUI при входе · fallback /chars · /charsui')
 end)

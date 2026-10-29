@@ -149,54 +149,77 @@ exports('softDelete', (accountId, characterId) => softDelete(accountId, characte
 exports('select', (source, characterId) => selectCharacter(source, characterId));
 exports('savePosition', (characterId, pos) => savePosition(characterId, pos));
 
-onNet('sync:characters:list', async () => {
+function withReq(payload, reqId) {
+  if (reqId == null || reqId === '') return payload;
+  return { ...payload, reqId: Number(reqId) };
+}
+
+onNet('sync:characters:list', async (reqId) => {
   const src = global.source;
   try {
     const ctx = requireCtx(src);
     const list = await listByAccount(ctx.accountId);
-    emitNet('sync:characters:listResult', src, {
-      ok: true,
-      characters: list,
-      maxSlots: maxSlots(),
-      isNewAccount: list.length === 0,
-    });
+    emitNet(
+      'sync:characters:listResult',
+      src,
+      withReq(
+        {
+          ok: true,
+          characters: list,
+          maxSlots: maxSlots(),
+          isNewAccount: list.length === 0,
+        },
+        reqId,
+      ),
+    );
   } catch (err) {
-    emitNet('sync:characters:listResult', src, {
-      ok: false,
-      error: err && err.message ? err.message : 'error',
-    });
+    emitNet(
+      'sync:characters:listResult',
+      src,
+      withReq({ ok: false, error: err && err.message ? err.message : 'error' }, reqId),
+    );
   }
 });
 
-onNet('sync:characters:create', async (payload) => {
+onNet('sync:characters:create', async (payload, reqId) => {
   const src = global.source;
   try {
     const ctx = requireCtx(src);
     const ch = await createCharacter(ctx.accountId, payload || {});
     emit('sync:characters:created', { source: Number(src), character: ch });
-    emitNet('sync:characters:createResult', src, { ok: true, character: ch });
+    emitNet(
+      'sync:characters:createResult',
+      src,
+      withReq({ ok: true, character: ch }, reqId),
+    );
   } catch (err) {
-    emitNet('sync:characters:createResult', src, {
-      ok: false,
-      error: err && err.message ? err.message : 'error',
-    });
+    emitNet(
+      'sync:characters:createResult',
+      src,
+      withReq({ ok: false, error: err && err.message ? err.message : 'error' }, reqId),
+    );
   }
 });
 
-onNet('sync:characters:select', async (characterId) => {
+onNet('sync:characters:select', async (characterId, reqId) => {
   const src = global.source;
   try {
     const ch = await selectCharacter(src, Number(characterId));
-    emitNet('sync:characters:selectResult', src, { ok: true, character: ch });
+    emitNet(
+      'sync:characters:selectResult',
+      src,
+      withReq({ ok: true, character: ch }, reqId),
+    );
   } catch (err) {
-    emitNet('sync:characters:selectResult', src, {
-      ok: false,
-      error: err && err.message ? err.message : 'error',
-    });
+    emitNet(
+      'sync:characters:selectResult',
+      src,
+      withReq({ ok: false, error: err && err.message ? err.message : 'error' }, reqId),
+    );
   }
 });
 
-onNet('sync:characters:delete', async (characterId) => {
+onNet('sync:characters:delete', async (characterId, reqId) => {
   const src = global.source;
   try {
     const ctx = requireCtx(src);
@@ -204,12 +227,13 @@ onNet('sync:characters:delete', async (characterId) => {
       throw new Error('sync_characters: нельзя удалить активного персонажа');
     }
     await softDelete(ctx.accountId, Number(characterId));
-    emitNet('sync:characters:deleteResult', src, { ok: true });
+    emitNet('sync:characters:deleteResult', src, withReq({ ok: true }, reqId));
   } catch (err) {
-    emitNet('sync:characters:deleteResult', src, {
-      ok: false,
-      error: err && err.message ? err.message : 'error',
-    });
+    emitNet(
+      'sync:characters:deleteResult',
+      src,
+      withReq({ ok: false, error: err && err.message ? err.message : 'error' }, reqId),
+    );
   }
 });
 
