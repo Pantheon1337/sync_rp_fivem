@@ -97,9 +97,13 @@ export const useSyncStore = create((set, get) => ({
     set({ loading: true, error: null });
     const res = await nuiFetch('createCharacter', payload);
     if (!res?.ok) {
+      const raw = String(res?.error || '').trim();
+      const useless = !raw || raw === 'error' || raw === '[object Object]' || raw === 'empty';
       set({
         loading: false,
-        error: res?.error || 'Не удалось создать персонажа. Проверьте имя и дату рождения.',
+        error: useless
+          ? 'Не удалось создать персонажа. В консоли FX ищите строку [sync_characters] create failed'
+          : raw,
       });
       return false;
     }

@@ -200,8 +200,31 @@ RegisterNUICallback('listCharacters', function(_, cb)
 end)
 
 RegisterNUICallback('createCharacter', function(data, cb)
-  local reqId = track(cb)
-  TriggerServerEvent('sync:characters:create', data or {}, reqId)
+  local payload = data
+  if type(payload) == 'string' then
+    local ok, decoded = pcall(json.decode, payload)
+    payload = (ok and type(decoded) == 'table') and decoded or {}
+  end
+  if type(payload) ~= 'table' then
+    payload = {}
+  end
+  print(('[sync_nui] createCharacter req name=%s %s'):format(
+    tostring(payload.firstName),
+    tostring(payload.lastName)
+  ))
+  local reqId = track(function(res)
+    if type(res) ~= 'table' or not res.ok then
+      print(('[sync_nui] createCharacter FAILED: %s'):format(
+        tostring(res and res.error or 'unknown')
+      ))
+    else
+      print(('[sync_nui] createCharacter ok id=%s'):format(
+        tostring(res.character and res.character.id)
+      ))
+    end
+    cb(res or { ok = false, error = 'empty' })
+  end)
+  TriggerServerEvent('sync:characters:create', payload, reqId)
 end)
 
 RegisterNUICallback('selectCharacter', function(data, cb)

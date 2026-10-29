@@ -15,10 +15,53 @@ try {
   throw err;
 }
 
+/** FiveM export rejections often strip Error fields — rebuild a useful message. */
+function extractErrMessage(err) {
+  if (err == null || err === '') return '';
+  if (typeof err === 'string') return err;
+  if (typeof err === 'number' || typeof err === 'boolean') return String(err);
+  const parts = [];
+  for (const key of ['message', 'sqlMessage', 'code', 'errno', 'sqlState', 'name']) {
+    const v = err[key];
+    if (v != null && String(v).trim() !== '') parts.push(String(v));
+  }
+  if (parts.length) return parts.join(' | ');
+  try {
+    const json = JSON.stringify(err);
+    if (json && json !== '{}' && json !== 'null') return json;
+  } catch {
+    /* ignore */
+  }
+  const s = String(err);
+  return s === '[object Object]' ? '' : s;
+}
+
+function wrapDbErr(err, label) {
+  const detail = extractErrMessage(err);
+  const msg = detail
+    ? `sync_characters: ${label}: ${detail}`
+    : `sync_characters: ${label}: неизвестная ошибка БД (смотрите консоль FX)`;
+  const e = new Error(msg);
+  e.code = (err && err.code) || 'DB_ERROR';
+  return e;
+}
+
 function db() {
   return {
-    query: (...args) => exports.sync_db.query(...args),
-    transaction: (steps) => exports.sync_db.transaction(steps),
+    async query(...args) {
+      try {
+        return await exports.sync_db.query(...args);
+      } catch (err) {
+        throw wrapDbErr(err, 'query');
+      }
+    },
+    async transaction(steps) {
+      try {
+        return await exports.sync_db.transaction(steps);
+      } catch (err) {
+        throw wrapDbErr(err, 'transaction');
+      }
+    },
   };
 }
 
@@ -198,29 +241,50 @@ onNet('sync:characters:list', async (reqId) => {
 });
 
 function clientError(err) {
-  const raw = err && err.message ? String(err.message) : String(err || 'error');
-  return raw.replace(/^sync_characters:\s*/i, '') || 'Не удалось создать персонажа';
+  const raw = extractErrMessage(err) || 'Не удалось создать персонажа';
+  const cleaned = raw.replace(/^sync_characters:\s*/i, '').trim();
+  if (!cleaned || cleaned === 'error' || cleaned === '[object Object]') {
+    return 'Не удалось создать персонажа. Откройте консоль FX (F8 сервера) — ищите [sync_characters] create failed';
+  }
+  return cleaned;
 }
 
 onNet('sync:characters:create', async (payload, reqId) => {
   const src = global.source;
   try {
     const ctx = requireCtx(src);
-    const body = payload && typeof payload === 'object' ? payload : {};
+    let body = payload;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        body = {};
+      }
+    }
+    if (!body || typeof body !== 'object') body = {};
     console.log(
-      `[sync_characters] create request source=${src} name=${body.firstName || '?'} ${body.lastName || '?'}`,
+      `[sync_characters] create request source=${src} account=${ctx.accountId} name=${body.firstName || '?'} ${body.lastName || '?'} gender=${body.gender || '?'} dob=${body.dateOfBirth || '?'} height=${body.heightCm ?? '?'}`,
     );
     const ch = await createCharacter(ctx.accountId, body);
+    if (!ch || !ch.id) {
+      throw new Error('sync_characters: create вернул пустого персонажа');
+    }
     emit('sync:characters:created', { source: Number(src), character: ch });
     emitNet(
       'sync:characters:createResult',
       src,
       withReq({ ok: true, character: ch }, reqId),
     );
+    console.log(
+      `[sync_characters] create ok source=${src} id=${ch.id} ${ch.firstName} ${ch.lastName}`,
+    );
   } catch (err) {
+    const detail = extractErrMessage(err) || String(err);
+    // console.log too — some FX setups hide console.error
+    console.log('[sync_characters] create failed:', detail);
     console.error(
       '[sync_characters] create failed:',
-      err && err.stack ? err.stack : err && err.message ? err.message : err,
+      err && err.stack ? err.stack : detail,
     );
     emitNet(
       'sync:characters:createResult',

@@ -99,12 +99,38 @@ function createCharactersRepo(db, options = {}) {
     return rowToCharacter(rows[0]);
   }
 
+  async function insertCharacterRow(params) {
+    // Prefer full Stage-3 schema; fall back when appearance_json migration not applied.
+    try {
+      const result = await db.query(
+        `INSERT INTO characters
+          (uuid, account_id, slot, first_name, last_name, date_of_birth, gender, model, appearance_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+        params,
+      );
+      return Number(result && result.insertId);
+    } catch (err) {
+      const msg = String(
+        (err && (err.sqlMessage || err.message)) || err || '',
+      );
+      if (!/appearance_json|Unknown column/i.test(msg)) throw err;
+      const result = await db.query(
+        `INSERT INTO characters
+          (uuid, account_id, slot, first_name, last_name, date_of_birth, gender, model)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        params,
+      );
+      return Number(result && result.insertId);
+    }
+  }
+
   async function create(accountId, input) {
-    const firstName = normalizeName(input.firstName);
-    const lastName = normalizeName(input.lastName);
-    const gender = normalizeGender(input.gender);
-    const dateOfBirth = normalizeDob(input.dateOfBirth || '1995-01-01');
-    const heightCm = normalizeHeightCm(input.heightCm);
+    const body = input && typeof input === 'object' ? input : {};
+    const firstName = normalizeName(body.firstName);
+    const lastName = normalizeName(body.lastName);
+    const gender = normalizeGender(body.gender);
+    const dateOfBirth = normalizeDob(body.dateOfBirth || '1995-01-01');
+    const heightCm = normalizeHeightCm(body.heightCm);
     const model = gender === 'female' ? FEMALE_MODEL : MALE_MODEL;
 
     const existing = await listByAccount(accountId);
@@ -117,16 +143,15 @@ function createCharactersRepo(db, options = {}) {
     }
 
     const uuid = randomUUID();
-    // Insert without height_cm so pre-005 DBs keep working; then best-effort UPDATE.
-    const result = await db.transaction([
-      {
-        sql: `INSERT INTO characters
-          (uuid, account_id, slot, first_name, last_name, date_of_birth, gender, model, appearance_json)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
-        params: [uuid, accountId, slot, firstName, lastName, dateOfBirth, gender, model],
-      },
-    ]);
-    const insertId = Number(result[0].insertId);
+    const params = [uuid, accountId, slot, firstName, lastName, dateOfBirth, gender, model];
+    // Single query (not transaction) — fewer FiveM export serialization edge cases.
+    // height_cm optional: INSERT without it, then best-effort UPDATE (pre-005 height DBs).
+    const insertId = await insertCharacterRow(params);
+    if (!Number.isFinite(insertId) || insertId <= 0) {
+      throw new Error(
+        'sync_characters: INSERT не вернул id — проверьте sync_db и npm run migrate',
+      );
+    }
     try {
       await db.query(`UPDATE characters SET height_cm = ? WHERE id = ? AND deleted_at IS NULL`, [
         heightCm,
@@ -135,7 +160,13 @@ function createCharactersRepo(db, options = {}) {
     } catch {
       // Column missing until migration 005_character_height — character still created.
     }
-    return get(insertId);
+    const created = await get(insertId);
+    if (!created) {
+      throw new Error(
+        `sync_characters: строка id=${insertId} создана, но SELECT не вернул персонажа`,
+      );
+    }
+    return created;
   }
 
   async function softDelete(accountId, characterId) {
