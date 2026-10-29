@@ -189,8 +189,10 @@ SELECT id, disconnected_at, disconnect_reason FROM sessions ORDER BY id DESC LIM
 | `migrate` ECONNREFUSED      | контейнер up? порт 3306 свободен?              |
 | Access denied               | пароль в DSN = `SYNC_DB_PASSWORD` в `.env`     |
 | Resource not found          | junction/копия в `sync\resources`              |
-| Node / mysql2 missing       | `cd resources\sync_db && npm ci`               |
+| Cannot find module './pool' | `git pull` (require с `.js`); перезапуск FX    |
+| Node / mysql2 missing       | `cd resources\sync_db && npm.cmd ci`           |
 | Node 22 / runtime error     | FXServer build ≥ 12913                         |
+| Couldn't find resource hardcap | убрать `ensure hardcap` из server.cfg       |
 | Зашли, но нет персонажа/NUI | нормально для Stage 1 — только account/session |
 
 ---

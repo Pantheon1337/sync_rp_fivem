@@ -1,6 +1,6 @@
 'use strict';
 
-const { createPlayerRegistry } = require('../lib/context');
+const { createPlayerRegistry } = require('../lib/context.js');
 
 const registry = createPlayerRegistry();
 let bootOk = false;

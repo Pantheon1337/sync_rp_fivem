@@ -1,7 +1,7 @@
 'use strict';
 
 const { randomUUID } = require('node:crypto');
-const { normalizeIdentifierList, sortByPriority } = require('./identifiers');
+const { normalizeIdentifierList, sortByPriority } = require('./identifiers.js');
 
 /**
  * @param {{ query: Function, transaction: Function }} db

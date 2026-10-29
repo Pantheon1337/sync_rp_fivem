@@ -1,7 +1,7 @@
 'use strict';
 
 const { createHash } = require('node:crypto');
-const { createSessionTracker } = require('../lib/sessionState');
+const { createSessionTracker } = require('../lib/sessionState.js');
 
 const tracker = createSessionTracker();
 

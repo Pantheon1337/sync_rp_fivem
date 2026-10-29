@@ -1,6 +1,6 @@
 'use strict';
 
-const { resolveAccount } = require('../lib/resolveAccount');
+const { resolveAccount } = require('../lib/resolveAccount.js');
 
 function db() {
   return {

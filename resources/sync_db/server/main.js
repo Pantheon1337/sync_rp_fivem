@@ -1,6 +1,6 @@
 'use strict';
 
-const { initPool, query, transaction, healthcheck, isReady } = require('./pool');
+const { initPool, query, transaction, healthcheck, isReady } = require('./pool.js');
 
 let ready = false;
 

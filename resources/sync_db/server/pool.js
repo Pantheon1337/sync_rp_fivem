@@ -1,7 +1,7 @@
 'use strict';
 
 const mysql = require('mysql2/promise');
-const { parseDsn } = require('../lib/parseDsn');
+const { parseDsn } = require('../lib/parseDsn.js');
 
 /** @type {import('mysql2/promise').Pool | null} */
 let pool = null;
