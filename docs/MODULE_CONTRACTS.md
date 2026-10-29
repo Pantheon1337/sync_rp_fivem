@@ -132,11 +132,26 @@ Save appearance → normalize freemode JSON → select + spawn.
 ## `sync_hud` (Stage 4)
 
 **Владеет:** always-on NUI overlay (classic / minimal / server).  
-**Не владеет:** балансами (только отображает push от economy).
+**Не владеет:** балансами / needs (только отображает push от economy / sync_needs).
 
 | Convar | `sync_hud_variant` = `classic` \| `minimal` \| `server` |
 | Command | `/hud` toggle |
-| Net in | `sync:economy:balances`, `sync:hud:setVisible` |
+| Net in | `sync:economy:balances`, `sync:hud:needs`, `sync:hud:setVisible` |
+| Hooks | `sync:characters:selected` → request balances + needs |
+
+## `sync_needs` (Stage 4 — esx_basicneeds pattern)
+
+**Владеет:** runtime hunger/thirst (0–100%) + `characters.hunger` / `characters.thirst` columns (миграция `006`).  
+**Не владеет:** inventory (Stage 5 вызывает `useItem`); HP UI (нативный GTA).
+
+| Exports | `getNeeds`, `addHunger`, `addThirst`, `useItem`, `heal`, `listItems` |
+| Net in | `sync:needs:request`, `sync:needs:useItem`, `sync:needs:playerDied` |
+| Net out | `sync:hud:needs`, `sync:needs:update`, `sync:needs:onUse`, `sync:needs:starve`, `sync:needs:heal` |
+| Commands | `/sync_eat [item]`, `/sync_drink [item]`, `/sync_heal_needs`; client `/eat` `/drink` |
+| Config | `config/settings.json` (drain/save), `config/items.json` (food/drink + anim/prop) |
+| Hooks | `sync:characters:selected` → load + push HUD; drop → save |
+
+Паттерн: [esx_basicneeds](https://docs.esx-framework.org/en/esx_addons/esx_basicneeds) / esx_status (0–1e6 → Sync 0–100%). Без `es_extended`.
 
 ## `sync_bank` (Stage 4 / 4.1 locations)
 
@@ -196,6 +211,7 @@ Pay goes through `sync_economy` exports only.
 | accounts, account_identifiers | sync_identity   |
 | sessions                      | sync_sessions   |
 | characters                    | sync_characters |
+| characters.hunger / thirst    | sync_needs      |
 | economy_*                     | sync_economy    |
 | vehicles, vehicle_plates      | sync_vehicles   |
 | garages                       | sync_garages    |

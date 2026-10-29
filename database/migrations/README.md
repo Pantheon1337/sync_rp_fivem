@@ -11,6 +11,8 @@ npm run migrate
 | --------------------------- | ----- | ----------- |
 | `001_accounts_sessions.sql` | 1     | **active**  |
 | `002_characters.sql`        | 2     | **active**  |
-| `003_economy_ledger.sql`    | 4     | placeholder |
+| `003_economy_ledger.sql`    | 4     | **active**  |
 | `004_vehicles_plates.sql`   | 6–7   | placeholder |
 | `005_character_appearance.sql` | 3  | **active**  |
+| `005_character_height.sql`  | 4 (P0) | **active**  |
+| `006_character_needs.sql`   | 4 (needs) | **active**  |

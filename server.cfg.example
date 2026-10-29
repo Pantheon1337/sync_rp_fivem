@@ -32,6 +32,7 @@ ensure sync_nui
 ensure sync_chat
 ensure sync_economy
 ensure sync_hud
+ensure sync_needs
 ensure sync_bank
 
 # HUD variant: classic | minimal | server

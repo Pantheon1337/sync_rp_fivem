@@ -52,7 +52,7 @@ RegisterNetEvent('sync:economy:balances', function(data)
   pushHud({ cash = cash, bank = bank })
 end)
 
---- Future needs module can push these; Stage 4 keeps local stub values.
+--- sync_needs pushes hunger/thirst (esx_basicneeds pattern → rings).
 RegisterNetEvent('sync:hud:needs', function(data)
   if type(data) ~= 'table' then return end
   if data.hunger ~= nil then hunger = math.max(0, math.min(100, tonumber(data.hunger) or hunger)) end
@@ -69,6 +69,7 @@ RegisterNetEvent('sync:characters:selected', function()
   hudVisible = true
   ensureNativeVitalHud()
   TriggerServerEvent('sync:economy:getBalances')
+  TriggerServerEvent('sync:needs:request')
   pushHud()
 end)
 

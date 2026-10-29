@@ -19,12 +19,12 @@ cd F:\SyncRP2.0\sync_rp_fivem
 # Через .cmd — не упирается в ExecutionPolicy
 .\scripts\deploy-po.cmd -Targets hud
 
-# HUD + банк + economy (+ миграция)
-.\scripts\deploy-po.cmd -Targets hud,bank,economy -Migrate `
+# HUD + банк + economy + needs (+ миграция)
+.\scripts\deploy-po.cmd -Targets hud,bank,economy,needs -Migrate `
   -Dsn "mysql://syncrp:ВАШ_ПАРОЛЬ@127.0.0.1:3306/syncrp"
 
 # Всё Stage 4 UI
-.\scripts\deploy-po.cmd -Targets hud,bank,chat,nui,economy
+.\scripts\deploy-po.cmd -Targets hud,bank,chat,nui,economy,needs
 ```
 
 Если ругается ExecutionPolicy на `.ps1` напрямую — всегда зови `.cmd`, либо:

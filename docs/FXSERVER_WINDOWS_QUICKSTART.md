@@ -214,15 +214,15 @@ WHERE disconnected_at IS NULL;
 
 ```powershell
 cd F:\SyncRP2.0\sync_rp_fivem
-.\scripts\deploy-po.ps1 -Targets hud,bank,economy -Migrate `
+.\scripts\deploy-po.ps1 -Targets hud,bank,economy,needs -Migrate `
   -Dsn "mysql://syncrp:ВАШ_ПАРОЛЬ@127.0.0.1:3306/syncrp"
 ```
 
 В txAdmin Live Console / консоли FX: `exec syncrp-hotreload.cfg`  
 (полный рестарт FX не нужен для правок HUD/NUI). См. [scripts/README.md](../scripts/README.md).
 
-В `server.cfg` после chat (один раз): `ensure sync_economy`, `ensure sync_hud`, `ensure sync_bank`.  
-В игре: HUD справа (cash/bank); **F6** или `/bank`.
+В `server.cfg` после chat (один раз): `ensure sync_economy`, `ensure sync_hud`, `ensure sync_needs`, `ensure sync_bank`.  
+В игре: HUD справа (cash/bank) + кольца голод/жажда; **F6** или `/bank`; тест еды `/eat` `/drink`.
 
 ---
 

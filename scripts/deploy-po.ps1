@@ -18,7 +18,7 @@
 
 .PARAMETER Targets
   What to deploy: hud, bank, chat, nui, economy, db, characters, spawn, all
-  Example: -Targets hud,bank,economy
+  Example: -Targets hud,bank,economy,needs
 
 .PARAMETER Migrate
   Run npm run migrate (needs SYNC_DB_DSN or -Dsn).
@@ -34,7 +34,7 @@
 
 .EXAMPLE
   .\scripts\deploy-po.cmd -Targets hud
-  .\scripts\deploy-po.cmd -Targets hud,bank,economy -Migrate -Dsn "mysql://syncrp:PASS@127.0.0.1:3306/syncrp"
+  .\scripts\deploy-po.cmd -Targets hud,bank,economy,needs -Migrate -Dsn "mysql://syncrp:PASS@127.0.0.1:3306/syncrp"
 #>
 
 [CmdletBinding()]
@@ -77,7 +77,7 @@ $Targets = @(
     Where-Object { $_ }
 )
 if ($Targets -contains 'all') {
-  $Targets = @('hud', 'bank', 'chat', 'nui', 'economy', 'db', 'characters', 'spawn')
+  $Targets = @('hud', 'bank', 'chat', 'nui', 'economy', 'needs', 'db', 'characters', 'spawn')
 }
 $Targets = $Targets | Select-Object -Unique
 Write-Host ("Targets: " + ($Targets -join ', '))
@@ -168,6 +168,7 @@ $map = @{
   chat       = 'sync_chat'
   nui        = 'sync_nui'
   economy    = 'sync_economy'
+  needs      = 'sync_needs'
   db         = 'sync_db'
   characters = 'sync_characters'
   spawn      = 'sync_spawn'
@@ -192,7 +193,7 @@ foreach ($t in $Targets) {
   [void]$restartList.Add($name)
 }
 
-$order = @('sync_db', 'sync_economy', 'sync_nui', 'sync_chat', 'sync_hud', 'sync_bank', 'sync_characters', 'sync_spawn')
+$order = @('sync_db', 'sync_economy', 'sync_nui', 'sync_chat', 'sync_hud', 'sync_needs', 'sync_bank', 'sync_characters', 'sync_spawn')
 $restartOrdered = @($order | Where-Object { $restartList -contains $_ }) + @($restartList | Where-Object { $order -notcontains $_ })
 $restartOrdered = $restartOrdered | Select-Object -Unique
 

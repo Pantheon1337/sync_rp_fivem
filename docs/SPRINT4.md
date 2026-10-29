@@ -11,15 +11,17 @@
 | Money unit | **BIGINT целые рубли (₽)** |
 | Миграция | `003_economy_ledger.sql` (APPLY); seed из `characters.cash/bank` один раз |
 | `sync_hud` | Сверху справа: улица + cash/bank (без чёрной плиты CEF). Голод/жажда — кольца правее миникарты (burger / droplet); mic только при talk. HP — нативный GTA. |
+| `sync_needs` | Голод/жажда (паттерн [esx_basicneeds](https://docs.esx-framework.org/en/esx_addons/esx_basicneeds)): drain, save, еда/питьё + аним, урон при 0. Миграция `006`. |
 | `sync_bank` | NUI банк: Счета / Перевод / История; мир: Fleeca/Pacific + ATM (E); F6 только у точки |
 | Locations | `config/locations.json` — паттерн branch points + ATM models/coords (см. [BANKS.md](./BANKS.md)) |
 | Bank account # | UI stub `**** ----` — **не рандом**. Постоянный номер счёта → Stage 16 |
 
 ## Поток
 
-1. Выбор персонажа → `sync:characters:selected` → `ensurePlayerAccounts` → push балансов в HUD.
+1. Выбор персонажа → `sync:characters:selected` → `ensurePlayerAccounts` + `sync_needs` bind → push балансов и колец в HUD.
 2. Игрок: **F6** / `/bank` → снять/положить cash↔bank через ledger.
 3. Повтор того же `idempotencyKey` не дюпает деньги.
+4. Needs: `/eat` `/drink` (или `/sync_eat bread`) → анимация + рост колец; пустые кольца → урон HP.
 
 ## Deploy
 
@@ -31,7 +33,7 @@ cd F:\SyncRP2.0\sync_rp_fivem
 .\scripts\deploy-po.ps1 -Targets hud
 
 # Stage 4 целиком (+ migrate один раз):
-.\scripts\deploy-po.ps1 -Targets hud,bank,economy -Migrate `
+.\scripts\deploy-po.ps1 -Targets hud,bank,economy,needs -Migrate `
   -Dsn "mysql://syncrp:ВАШ_ПАРОЛЬ@127.0.0.1:3306/syncrp"
 ```
 
@@ -51,6 +53,7 @@ exec syncrp-hotreload.cfg
 ```cfg
 ensure sync_economy
 ensure sync_hud
+ensure sync_needs
 ensure sync_bank
 ```
 
@@ -58,10 +61,11 @@ ensure sync_bank
 
 ## PO test
 
-1. Зайти → выбрать персонажа → HUD справа: улица, ₽ cash/bank, полоски HP/голод/жажда.
+1. Зайти → выбрать персонажа → HUD справа: улица, ₽ cash/bank; правее миникарты кольца голод/жажда.
 2. `/bank` или **F6** → вкладки Счета / Перевод / История.
 3. Положить часть наличных на счёт → суммы в HUD обновляются; повтор той же операции с тем же ключом не дюпает.
-4. SQL: `SELECT * FROM economy_accounts; SELECT * FROM economy_ledger ORDER BY id DESC LIMIT 10;`
+4. `/eat` или `/drink` → анимация + кольца растут; `/sync_heal_needs` → 100/100.
+5. SQL: `SELECT * FROM economy_accounts; SELECT id, hunger, thirst FROM characters;`
 
 ## DoD
 
