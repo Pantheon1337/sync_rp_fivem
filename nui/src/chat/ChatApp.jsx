@@ -308,14 +308,14 @@ export default function ChatApp() {
                 onClick={send}
                 title="Отправить"
                 style={{
-                  background: 'rgba(59,130,246,0.55)',
+                  background: 'transparent',
                   color: '#fff',
-                  border: '1px solid rgba(255,255,255,0.12)',
+                  border: '1px solid rgba(96,165,250,0.75)',
                   borderRadius: 4,
                   padding: '0.45rem 0.65rem',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.9)',
                 }}
               >
                 →
