@@ -1,40 +1,40 @@
 <#
 .SYNOPSIS
-  SyncRP PO deploy: сброс локальных html → git pull → (migrate) → NUI build → xcopy → hot-reload cfg.
+  SyncRP PO deploy: reset local html, git pull, optional migrate, NUI build, xcopy, hot-reload cfg.
 
 .DESCRIPTION
-  Решает постоянный конфликт pull из-за Vite-сборки в resources/*/html.
-  Полный рестарт FXServer обычно НЕ нужен: после копирования выполните
-  `exec syncrp-hotreload.cfg` в консоли сервера (или txAdmin Live Console).
+  Avoids git pull abort caused by local Vite builds under resources/*/html.
+  Full FXServer reboot usually NOT required: after copy run
+  `exec syncrp-hotreload.cfg` in the server console (or txAdmin Live Console).
 
 .PARAMETER Branch
-  Git-ветка (default: текущая или cursor/stage-4-economy-hud-5b89).
+  Git branch (default: current branch).
 
 .PARAMETER ServerData
-  Путь к FX server-data (default: F:\SyncRP2.0\sync).
+  FX server-data path (default: F:\SyncRP2.0\sync).
 
 .PARAMETER Repo
-  Путь к git-клону (default: каталог выше scripts\ = корень репо).
+  Git clone path (default: parent of scripts\).
 
 .PARAMETER Targets
-  Что деплоить: hud, bank, chat, nui, economy, db, characters, spawn, all
-  Можно несколько: -Targets hud,bank,economy
+  What to deploy: hud, bank, chat, nui, economy, db, characters, spawn, all
+  Example: -Targets hud,bank,economy
 
 .PARAMETER Migrate
-  Запустить npm run migrate (нужен SYNC_DB_DSN или -Dsn).
+  Run npm run migrate (needs SYNC_DB_DSN or -Dsn).
 
 .PARAMETER Dsn
-  mysql://... если не задан $env:SYNC_DB_DSN.
+  mysql://... if $env:SYNC_DB_DSN is not set.
 
 .PARAMETER SkipPull
-  Не делать git pull (только build + xcopy).
+  Skip git pull (build + xcopy only).
 
 .PARAMETER SkipBuild
-  Не собирать NUI (только xcopy уже собранного).
+  Skip NUI build (xcopy existing build only).
 
 .EXAMPLE
-  .\scripts\deploy-po.ps1 -Targets hud
-  .\scripts\deploy-po.ps1 -Targets hud,bank,economy -Migrate -Dsn "mysql://syncrp:PASS@127.0.0.1:3306/syncrp"
+  .\scripts\deploy-po.cmd -Targets hud
+  .\scripts\deploy-po.cmd -Targets hud,bank,economy -Migrate -Dsn "mysql://syncrp:PASS@127.0.0.1:3306/syncrp"
 #>
 
 [CmdletBinding()]
@@ -56,20 +56,19 @@ if (-not $Repo) {
   $Repo = Split-Path -Parent $PSScriptRoot
 }
 if (-not (Test-Path (Join-Path $Repo '.git'))) {
-  throw "Не найден git-репозиторий в $Repo"
+  throw "Git repo not found at $Repo"
 }
 if (-not (Test-Path $ServerData)) {
-  throw "Server-data не найден: $ServerData"
+  throw "Server-data not found: $ServerData"
 }
 
 Set-Location $Repo
 
-function Write-Step($msg) {
-  Write-Host ""
+function Write-Step([string]$msg) {
+  Write-Host ''
   Write-Host "==> $msg" -ForegroundColor Cyan
 }
 
-# Expand "all"
 if ($Targets -contains 'all') {
   $Targets = @('hud', 'bank', 'chat', 'nui', 'economy', 'db', 'characters', 'spawn')
 }
@@ -82,8 +81,7 @@ $htmlRoots = @(
   'resources/sync_nui/html'
 )
 
-# --- 1) Discard local Vite html so pull never aborts ---
-Write-Step 'Сброс локальных NUI html (чтобы git pull не ругался)'
+Write-Step 'Reset local NUI html (so git pull does not abort)'
 foreach ($h in $htmlRoots) {
   $p = Join-Path $Repo $h
   if (Test-Path $p) {
@@ -92,7 +90,6 @@ foreach ($h in $htmlRoots) {
   }
 }
 
-# --- 2) Pull ---
 if (-not $SkipPull) {
   if (-not $Branch) {
     $Branch = (git rev-parse --abbrev-ref HEAD).Trim()
@@ -101,22 +98,22 @@ if (-not $SkipPull) {
   git fetch origin $Branch
   git checkout $Branch
   git pull origin $Branch
-  Write-Host ("HEAD: " + (git rev-parse --short HEAD))
-} else {
-  Write-Step 'SkipPull — pull пропущен'
+  Write-Host ('HEAD: ' + (git rev-parse --short HEAD))
+}
+else {
+  Write-Step 'SkipPull - pull skipped'
 }
 
-# --- 3) Migrate ---
 if ($Migrate) {
-  Write-Step 'Миграции БД'
+  Write-Step 'DB migrate'
   if ($Dsn) { $env:SYNC_DB_DSN = $Dsn }
   if (-not $env:SYNC_DB_DSN) {
-    throw 'Нужен -Dsn или $env:SYNC_DB_DSN для -Migrate'
+    throw 'Need -Dsn or $env:SYNC_DB_DSN for -Migrate'
   }
   npm.cmd run migrate
+  if ($LASTEXITCODE -ne 0) { throw "migrate failed ($LASTEXITCODE)" }
 }
 
-# --- 4) NUI build ---
 $needHud = $Targets -contains 'hud'
 $needBank = $Targets -contains 'bank'
 $needChat = $Targets -contains 'chat'
@@ -125,20 +122,37 @@ $needNui = $Targets -contains 'nui'
 if (-not $SkipBuild -and ($needHud -or $needBank -or $needChat -or $needNui)) {
   Write-Step 'NUI build'
   Push-Location (Join-Path $Repo 'nui')
-  if (-not (Test-Path 'node_modules')) {
-    npm.cmd ci
+  try {
+    if (-not (Test-Path 'node_modules')) {
+      npm.cmd ci
+      if ($LASTEXITCODE -ne 0) { throw "npm ci failed ($LASTEXITCODE)" }
+    }
+    if ($needNui) {
+      npm.cmd run build:chars
+      if ($LASTEXITCODE -ne 0) { throw "build:chars failed ($LASTEXITCODE)" }
+    }
+    if ($needChat) {
+      npm.cmd run build:chat
+      if ($LASTEXITCODE -ne 0) { throw "build:chat failed ($LASTEXITCODE)" }
+    }
+    if ($needHud) {
+      npm.cmd run build:hud
+      if ($LASTEXITCODE -ne 0) { throw "build:hud failed ($LASTEXITCODE)" }
+    }
+    if ($needBank) {
+      npm.cmd run build:bank
+      if ($LASTEXITCODE -ne 0) { throw "build:bank failed ($LASTEXITCODE)" }
+    }
   }
-  if ($needNui) { npm.cmd run build:chars }
-  if ($needChat) { npm.cmd run build:chat }
-  if ($needHud) { npm.cmd run build:hud }
-  if ($needBank) { npm.cmd run build:bank }
-  Pop-Location
-} elseif ($SkipBuild) {
-  Write-Step 'SkipBuild — сборка NUI пропущена'
+  finally {
+    Pop-Location
+  }
+}
+elseif ($SkipBuild) {
+  Write-Step 'SkipBuild - NUI build skipped'
 }
 
-# --- 5) xcopy resources → server-data ---
-Write-Step "xcopy → $ServerData\resources"
+Write-Step "xcopy -> $ServerData\resources"
 $destRoot = Join-Path $ServerData 'resources'
 $map = @{
   hud        = 'sync_hud'
@@ -154,14 +168,14 @@ $map = @{
 $restartList = New-Object System.Collections.Generic.List[string]
 foreach ($t in $Targets) {
   if (-not $map.ContainsKey($t)) {
-    Write-Warning "Неизвестный target: $t (пропуск)"
+    Write-Warning "Unknown target: $t (skip)"
     continue
   }
   $name = $map[$t]
   $src = Join-Path $Repo "resources\$name"
   $dst = Join-Path $destRoot $name
   if (-not (Test-Path $src)) {
-    Write-Warning "Нет источника $src"
+    Write-Warning "Missing source $src"
     continue
   }
   Write-Host "  $name"
@@ -170,35 +184,36 @@ foreach ($t in $Targets) {
   [void]$restartList.Add($name)
 }
 
-# Prefer restart order for deps
 $order = @('sync_db', 'sync_economy', 'sync_nui', 'sync_chat', 'sync_hud', 'sync_bank', 'sync_characters', 'sync_spawn')
 $restartOrdered = @($order | Where-Object { $restartList -contains $_ }) + @($restartList | Where-Object { $order -notcontains $_ })
 $restartOrdered = $restartOrdered | Select-Object -Unique
 
-# --- 6) Hot-reload cfg for FX console ---
 if (-not $NoHotReloadCfg -and $restartOrdered.Count -gt 0) {
   $cfgPath = Join-Path $ServerData 'syncrp-hotreload.cfg'
-  $lines = @('# Auto-generated by scripts/deploy-po.ps1 — exec syncrp-hotreload.cfg')
+  $lines = New-Object System.Collections.Generic.List[string]
+  [void]$lines.Add('# Auto-generated by scripts/deploy-po.ps1 - run: exec syncrp-hotreload.cfg')
   foreach ($r in $restartOrdered) {
-    # ensure = start if missing; restart = recycle running
-    $lines += "ensure $r"
-    $lines += "restart $r"
+    [void]$lines.Add("ensure $r")
+    [void]$lines.Add("restart $r")
   }
-  Set-Content -Path $cfgPath -Value ($lines -join "`r`n") -Encoding UTF8
+  # ASCII/UTF8 without weird dashes - Windows PowerShell 5.1 safe
+  $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+  [System.IO.File]::WriteAllLines($cfgPath, $lines.ToArray(), $utf8NoBom)
+
   Write-Step "Hot-reload cfg: $cfgPath"
   Write-Host ''
-  Write-Host 'В консоли FXServer / txAdmin Live Console выполни:' -ForegroundColor Yellow
+  Write-Host 'In FXServer / txAdmin Live Console run:' -ForegroundColor Yellow
   Write-Host '  exec syncrp-hotreload.cfg' -ForegroundColor Green
   Write-Host ''
-  Write-Host 'Или по одному:' -ForegroundColor Yellow
+  Write-Host 'Or one by one:' -ForegroundColor Yellow
   foreach ($r in $restartOrdered) {
     Write-Host "  restart $r" -ForegroundColor Green
   }
 }
 
 Write-Host ''
-Write-Host 'Готово. Полный рестарт FX нужен только если:' -ForegroundColor DarkGray
-Write-Host '  — первый раз добавили ресурс в server.cfg' -ForegroundColor DarkGray
-Write-Host '  — миграция схемы / смена DSN' -ForegroundColor DarkGray
-Write-Host '  — правили sync_core / порядок ensure' -ForegroundColor DarkGray
+Write-Host 'Done. Full FX restart only needed if:' -ForegroundColor DarkGray
+Write-Host '  - first-time ensure of a new resource in server.cfg' -ForegroundColor DarkGray
+Write-Host '  - DB migration / DSN change' -ForegroundColor DarkGray
+Write-Host '  - sync_core / ensure order changes' -ForegroundColor DarkGray
 Write-Host ''
