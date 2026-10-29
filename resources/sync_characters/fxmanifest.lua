@@ -4,7 +4,7 @@ game 'gta5'
 name 'sync_characters'
 author 'SyncRP'
 description 'SyncCore characters create/select'
-version '0.2.2'
+version '0.3.0'
 
 node_version '22'
 

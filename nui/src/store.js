@@ -9,12 +9,30 @@ export const useSyncStore = create((set, get) => ({
   loading: false,
   error: null,
   selectedId: null,
+  isNewAccount: false,
+  mustSelect: false,
+  forceCreate: false,
+
+  openShell({ isNewAccount = false, mustSelect = false, forceCreate = false } = {}) {
+    set({
+      visible: true,
+      error: null,
+      isNewAccount,
+      mustSelect,
+      forceCreate,
+      view: forceCreate || isNewAccount ? 'create' : 'list',
+    });
+  },
 
   setVisible(visible) {
     set({ visible, error: null, view: 'list' });
   },
 
   setView(view) {
+    const { forceCreate, characters } = get();
+    if (view === 'list' && forceCreate && characters.length === 0) {
+      return;
+    }
     set({ view, error: null });
   },
 
@@ -25,22 +43,48 @@ export const useSyncStore = create((set, get) => ({
       set({ loading: false, error: res?.error || 'Не удалось загрузить персонажей' });
       return;
     }
+    const characters = res.characters || [];
+    const empty = characters.length === 0;
+    const prev = get();
+    const isNewAccount = !!(res.isNewAccount || empty || prev.isNewAccount);
+    const forceCreate = empty && (prev.forceCreate || isNewAccount || prev.mustSelect);
+    let view = prev.view;
+    if (empty) {
+      view = 'create';
+    } else if (prev.forceCreate && !empty) {
+      view = 'list';
+    }
     set({
       loading: false,
-      characters: res.characters || [],
+      characters,
       maxSlots: res.maxSlots || 3,
+      isNewAccount: empty ? isNewAccount : false,
+      forceCreate: empty ? forceCreate : false,
+      view,
     });
   },
 
   async createCharacter(payload) {
     set({ loading: true, error: null });
+    const wasEmpty = get().characters.length === 0;
+    const mustSelect = get().mustSelect;
     const res = await nuiFetch('createCharacter', payload);
     if (!res?.ok) {
       set({ loading: false, error: res?.error || 'Ошибка создания' });
       return false;
     }
+    const character = res.character;
     await get().refreshList();
-    set({ loading: false, view: 'list', selectedId: res.character?.id || null });
+    set({
+      loading: false,
+      view: 'list',
+      selectedId: character?.id || null,
+      forceCreate: false,
+      isNewAccount: false,
+    });
+    if ((wasEmpty || mustSelect) && character?.id) {
+      return get().selectCharacter(character.id);
+    }
     return true;
   },
 
@@ -51,7 +95,7 @@ export const useSyncStore = create((set, get) => ({
       set({ loading: false, error: res?.error || 'Ошибка выбора' });
       return false;
     }
-    set({ loading: false, visible: false });
+    set({ loading: false, visible: false, mustSelect: false });
     return true;
   },
 
@@ -68,7 +112,12 @@ export const useSyncStore = create((set, get) => ({
   },
 
   async close() {
+    if (get().mustSelect) {
+      set({ error: 'Сначала выберите или создайте персонажа' });
+      return false;
+    }
     await nuiFetch('close');
     set({ visible: false });
+    return true;
   },
 }));

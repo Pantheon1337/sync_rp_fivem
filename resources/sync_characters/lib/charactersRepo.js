@@ -106,7 +106,33 @@ function createCharactersRepo(db, options = {}) {
     return true;
   }
 
-  return { listByAccount, get, create, softDelete, maxSlots, rowToCharacter };
+  /**
+   * Persist last known world position (logout / autosave).
+   * @param {number} characterId
+   * @param {{ x: number, y: number, z: number, h?: number }} pos
+   */
+  async function savePosition(characterId, pos) {
+    const id = Number(characterId);
+    const x = Number(pos && pos.x);
+    const y = Number(pos && pos.y);
+    const z = Number(pos && pos.z);
+    const h = Number(pos && pos.h != null ? pos.h : 0);
+    if (!Number.isFinite(id) || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+      throw new Error('sync_characters: некорректная позиция');
+    }
+    if (!Number.isFinite(h)) {
+      throw new Error('sync_characters: некорректный heading');
+    }
+    const result = await db.query(
+      `UPDATE characters
+       SET position_x = ?, position_y = ?, position_z = ?, position_h = ?
+       WHERE id = ? AND deleted_at IS NULL`,
+      [x, y, z, h, id],
+    );
+    return Number(result.affectedRows || 0) > 0;
+  }
+
+  return { listByAccount, get, create, softDelete, savePosition, maxSlots, rowToCharacter };
 }
 
 module.exports = { createCharactersRepo, rowToCharacter };

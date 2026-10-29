@@ -108,5 +108,5 @@ end, false)
 
 CreateThread(function()
   Wait(3000)
-  notify('Stage 2: /chars | /charcreate | /charselect | /chardelete')
+  notify('Персонажи: NUI при входе · fallback /chars /charcreate /charselect /chardelete · /charsui')
 end)

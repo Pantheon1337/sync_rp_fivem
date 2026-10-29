@@ -1,3 +1,23 @@
+local tracking = false
+
+local function reportPosition()
+  if not tracking then
+    return
+  end
+  local ped = PlayerPedId()
+  if not DoesEntityExist(ped) then
+    return
+  end
+  local c = GetEntityCoords(ped)
+  local h = GetEntityHeading(ped)
+  TriggerServerEvent('sync:characters:savePosition', {
+    x = c.x + 0.0,
+    y = c.y + 0.0,
+    z = c.z + 0.0,
+    h = h + 0.0,
+  })
+end
+
 RegisterNetEvent('sync:spawn:do', function(payload)
   if type(payload) ~= 'table' then
     return
@@ -57,6 +77,22 @@ RegisterNetEvent('sync:spawn:do', function(payload)
 
   ShutdownLoadingScreen()
   ShutdownLoadingScreenNui()
+  tracking = true
+  TriggerServerEvent('sync:characters:savePosition', { x = x, y = y, z = z, h = h })
   TriggerEvent('sync:spawn:done', payload.characterId)
   print(('[sync_spawn] done model=%s pos=%.1f,%.1f,%.1f'):format(model, x, y, z))
+end)
+
+-- Autosave every 30s while in world
+CreateThread(function()
+  while true do
+    Wait(30000)
+    reportPosition()
+  end
+end)
+
+AddEventHandler('onResourceStop', function(res)
+  if res == GetCurrentResourceName() then
+    tracking = false
+  end
 end)

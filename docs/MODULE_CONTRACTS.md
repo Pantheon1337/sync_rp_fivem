@@ -77,15 +77,16 @@ Host CLI: `SYNC_DB_DSN=… npm run migrate` (`scripts/migrate.cjs`).
 
 ---
 
-## `sync_characters` (Stage 2)
+## `sync_characters` (Stage 2–3)
 
 **Владеет:** `characters` (и appearance blob, когда появится).
 
-| Exports | `listByAccount`, `create`, `get`, `softDelete` |
-| Net | `sync:characters:list`, `sync:characters:create`, `sync:characters:select` |
+| Exports | `listByAccount`, `create`, `get`, `softDelete`, `select`, `savePosition` |
+| Net | `sync:characters:list`, `sync:characters:create`, `sync:characters:select`, `sync:characters:delete`, `sync:characters:savePosition` |
 | Events | `sync:characters:selected`, `sync:characters:created` |
 
-Валидация имён/слотов на сервере. Select → `sync_core.setCharacter` + sessions update.
+Валидация имён/слотов на сервере. Select → `sync_core.setCharacter` + sessions update.  
+Позиция: клиент `sync_spawn` репортит coords → cache → flush в БД (периодически + на `sync:core:playerDropped`).
 
 ---
 
@@ -103,9 +104,12 @@ Host CLI: `SYNC_DB_DSN=… npm run migrate` (`scripts/migrate.cjs`).
 **Владеет:** shared NUI shell, theme tokens bridge.  
 **Не владеет:** доменными инвариантами.
 
-| Net / NUI | `sync:nui:ready`, feature routes |
-| Exports | `send(source, action, payload)` |
+| Net | `sync:nui:showCharacterSelect` (meta: `isNewAccount`, `mustSelect`, `forceCreate`), `sync:nui:hide` |
+| NUI callbacks | `listCharacters`, `createCharacter`, `selectCharacter`, `deleteCharacter`, `close` → proxy на `sync_characters` |
+| Exports | `showCharacterSelect(source, meta?)`, `hide(source)` |
 
+После `sync:core:playerRegistered` открывает NUI с `mustSelect=true` (закрыть нельзя до выбора).  
+Новый аккаунт (`created`) → `forceCreate` + RU-копирайт регистрации.  
 Клиентские NUI callbacks всегда проксируются на server handler владельца фичи.
 
 ---

@@ -202,11 +202,29 @@ WHERE disconnected_at IS NULL;
 | Node / mysql2 missing          | `cd resources\sync_db && npm.cmd ci`                           |
 | Node 22 / runtime error        | FXServer build ≥ 12913                                         |
 | Couldn't find resource hardcap | убрать `ensure hardcap` из server.cfg                          |
-| Зашли, но нет персонажа/NUI    | Stage 1: ок. Stage 2: `/chars` / `/charcreate` / `/charselect` |
+| Зашли, но нет персонажа/NUI    | Stage 3: `ensure sync_nui`; NUI должен открыться сам. Fallback `/charsui` |
 
 ---
 
-## Stage 2 — персонажи (кратко)
+## Stage 3 — регистрация / вход / NUI (актуально)
+
+Полный чеклист: [SPRINT3.md](./SPRINT3.md). Ветка: `cursor/stage-3-nui-characters-5b89`.
+
+```powershell
+cd F:\SyncRP2.0\sync_rp_fivem
+git pull origin cursor/stage-3-nui-characters-5b89
+cd nui && npm.cmd ci && npm.cmd run build && cd ..
+xcopy /E /I /Y resources\sync_nui        F:\SyncRP2.0\sync\resources\sync_nui
+xcopy /E /I /Y resources\sync_characters F:\SyncRP2.0\sync\resources\sync_characters
+xcopy /E /I /Y resources\sync_spawn      F:\SyncRP2.0\sync\resources\sync_spawn
+```
+
+В `server.cfg` после `sync_spawn`: `ensure sync_nui`.  
+В игре: первый заход → регистрация персонажа в NUI → БД; повторный → вход → позиция из БД.
+
+---
+
+## Stage 2 — персонажи (chat fallback)
 
 Полный чеклист: [SPRINT2.md](./SPRINT2.md). Ветка: `cursor/stage-2-characters-spawn-5b89`.
 

@@ -1,4 +1,5 @@
 local nuiOpen = false
+local mustSelect = false
 local pending = {}
 
 local function setFocus(state)
@@ -7,18 +8,26 @@ local function setFocus(state)
   SetNuiFocusKeepInput(false)
 end
 
-local function openCharacters()
+local function openCharacters(meta)
+  meta = meta or {}
+  mustSelect = meta.mustSelect == true
   setFocus(true)
-  SendNUIMessage({ action = 'openCharacters' })
+  SendNUIMessage({
+    action = 'openCharacters',
+    isNewAccount = meta.isNewAccount == true,
+    mustSelect = mustSelect,
+    forceCreate = meta.forceCreate == true,
+  })
 end
 
 local function closeNui()
+  mustSelect = false
   setFocus(false)
   SendNUIMessage({ action = 'close' })
 end
 
-RegisterNetEvent('sync:nui:showCharacterSelect', function()
-  openCharacters()
+RegisterNetEvent('sync:nui:showCharacterSelect', function(meta)
+  openCharacters(meta or { mustSelect = true })
 end)
 
 RegisterNetEvent('sync:nui:hide', function()
@@ -82,13 +91,17 @@ RegisterNUICallback('deleteCharacter', function(data, cb)
 end)
 
 RegisterNUICallback('close', function(_, cb)
+  if mustSelect then
+    cb({ ok = false, error = 'Сначала выберите или создайте персонажа' })
+    return
+  end
   closeNui()
   cb({ ok = true })
 end)
 
--- Fallback chat still works; /charsui opens NUI
+-- Fallback: reopen after already in world (may close)
 RegisterCommand('charsui', function()
-  openCharacters()
+  openCharacters({ mustSelect = false, isNewAccount = false })
 end, false)
 
 AddEventHandler('onResourceStop', function(res)

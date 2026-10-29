@@ -22,46 +22,69 @@ export async function nuiFetch(event, data = {}) {
   }
 }
 
+/** In-memory mock for Vite/Playwright outside FiveM */
+const mockState = {
+  characters: [
+    {
+      id: 1,
+      slot: 1,
+      firstName: 'Иван',
+      lastName: 'Петров',
+      gender: 'male',
+      dateOfBirth: '1990-05-01',
+      position: null,
+    },
+  ],
+};
+
 function mockNui(event, data) {
   if (event === 'listCharacters') {
     return {
       ok: true,
       maxSlots: 3,
-      characters: [
-        {
-          id: 1,
-          slot: 1,
-          firstName: 'Иван',
-          lastName: 'Петров',
-          gender: 'male',
-          dateOfBirth: '1990-05-01',
-        },
-      ],
+      isNewAccount: mockState.characters.length === 0,
+      characters: mockState.characters.map((c) => ({ ...c })),
     };
   }
   if (event === 'createCharacter') {
-    return {
-      ok: true,
-      character: {
-        id: 2,
-        slot: 2,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        gender: data.gender,
-        dateOfBirth: data.dateOfBirth,
-      },
+    const id = mockState.characters.length
+      ? Math.max(...mockState.characters.map((c) => c.id)) + 1
+      : 1;
+    const character = {
+      id,
+      slot: mockState.characters.length + 1,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      gender: data.gender,
+      dateOfBirth: data.dateOfBirth,
+      position: null,
     };
+    mockState.characters.push(character);
+    return { ok: true, character };
   }
   if (event === 'selectCharacter') {
     return { ok: true };
   }
   if (event === 'deleteCharacter') {
+    mockState.characters = mockState.characters.filter((c) => c.id !== data.id);
     return { ok: true };
   }
   if (event === 'close') {
     return { ok: true };
   }
   return { ok: false, error: 'mock-unknown' };
+}
+
+/** Test helper: empty roster → registration path */
+export function __mockResetCharacters(list) {
+  mockState.characters = Array.isArray(list) ? list : [];
+}
+
+if (isBrowser && !window.invokeNative) {
+  window.__syncNuiMock = {
+    resetCharacters: __mockResetCharacters,
+    getCharacters: () => mockState.characters.map((c) => ({ ...c })),
+  };
 }
 
 export function onNuiMessage(handler) {

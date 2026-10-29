@@ -30,12 +30,47 @@ function maxSlots() {
 
 let repo = createCharactersRepo(db(), { maxSlots: maxSlots() });
 
+/** @type {Map<number, { characterId: number, x: number, y: number, z: number, h: number, dirty: boolean }>} */
+const lastPos = new Map();
+const POSITION_FLUSH_MS = 60000;
+
 function requireCtx(source) {
   const ctx = exports.sync_core.getContext(source);
   if (!ctx || !ctx.accountId) {
     throw new Error('sync_characters: нет сессии SyncCore');
   }
   return ctx;
+}
+
+function parsePos(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+  const x = Number(payload.x);
+  const y = Number(payload.y);
+  const z = Number(payload.z);
+  const h = Number(payload.h != null ? payload.h : 0);
+  if (![x, y, z, h].every(Number.isFinite)) return null;
+  if (Math.abs(x) > 12000 || Math.abs(y) > 12000 || z < -500 || z > 2500) return null;
+  return { x, y, z, h };
+}
+
+function readServerPedPos(source) {
+  try {
+    if (typeof GetPlayerPed !== 'function' || typeof GetEntityCoords !== 'function') {
+      return null;
+    }
+    const ped = GetPlayerPed(String(source));
+    if (!ped || ped === 0) return null;
+    const coords = GetEntityCoords(ped);
+    const x = Number(Array.isArray(coords) ? coords[0] : coords && coords.x);
+    const y = Number(Array.isArray(coords) ? coords[1] : coords && coords.y);
+    const z = Number(Array.isArray(coords) ? coords[2] : coords && coords.z);
+    const h =
+      typeof GetEntityHeading === 'function' ? Number(GetEntityHeading(ped)) : 0;
+    if (![x, y, z].every(Number.isFinite)) return null;
+    return { x, y, z, h: Number.isFinite(h) ? h : 0 };
+  } catch {
+    return null;
+  }
 }
 
 async function listByAccount(accountId) {
@@ -52,6 +87,10 @@ async function getCharacter(characterId) {
 
 async function softDelete(accountId, characterId) {
   return repo.softDelete(accountId, characterId);
+}
+
+async function savePosition(characterId, pos) {
+  return repo.savePosition(characterId, pos);
 }
 
 async function selectCharacter(source, characterId) {
@@ -73,18 +112,54 @@ async function selectCharacter(source, characterId) {
   return ch;
 }
 
+async function flushPosition(source, reason) {
+  const src = Number(source);
+  const ctx = exports.sync_core.getContext(src);
+  const cached = lastPos.get(src);
+  const characterId = (ctx && ctx.characterId) || (cached && cached.characterId);
+  if (!characterId) {
+    lastPos.delete(src);
+    return false;
+  }
+  let pos = cached ? { x: cached.x, y: cached.y, z: cached.z, h: cached.h } : null;
+  if (!pos) {
+    pos = readServerPedPos(src);
+  }
+  lastPos.delete(src);
+  if (!pos) return false;
+  try {
+    await savePosition(characterId, pos);
+    console.log(
+      `[sync_characters] position saved character=${characterId} reason=${reason || 'flush'}`,
+    );
+    return true;
+  } catch (err) {
+    console.error(
+      '[sync_characters] position save failed:',
+      err && err.message ? err.message : err,
+    );
+    return false;
+  }
+}
+
 exports('listByAccount', (accountId) => listByAccount(accountId));
 exports('create', (accountId, input) => createCharacter(accountId, input));
 exports('get', (characterId) => getCharacter(characterId));
 exports('softDelete', (accountId, characterId) => softDelete(accountId, characterId));
 exports('select', (source, characterId) => selectCharacter(source, characterId));
+exports('savePosition', (characterId, pos) => savePosition(characterId, pos));
 
 onNet('sync:characters:list', async () => {
   const src = global.source;
   try {
     const ctx = requireCtx(src);
     const list = await listByAccount(ctx.accountId);
-    emitNet('sync:characters:listResult', src, { ok: true, characters: list, maxSlots: maxSlots() });
+    emitNet('sync:characters:listResult', src, {
+      ok: true,
+      characters: list,
+      maxSlots: maxSlots(),
+      isNewAccount: list.length === 0,
+    });
   } catch (err) {
     emitNet('sync:characters:listResult', src, {
       ok: false,
@@ -138,9 +213,52 @@ onNet('sync:characters:delete', async (characterId) => {
   }
 });
 
+onNet('sync:characters:savePosition', async (payload) => {
+  const src = Number(global.source);
+  try {
+    const ctx = requireCtx(src);
+    if (!ctx.characterId) return;
+    const pos = parsePos(payload);
+    if (!pos) return;
+    lastPos.set(src, {
+      characterId: Number(ctx.characterId),
+      ...pos,
+      dirty: true,
+    });
+  } catch {
+    // ignore unauthenticated / invalid
+  }
+});
+
+on('sync:core:playerDropped', (payload) => {
+  const src = payload && payload.source;
+  if (src == null) return;
+  setImmediate(async () => {
+    await flushPosition(src, 'disconnect');
+  });
+});
+
+setInterval(() => {
+  for (const entry of lastPos.values()) {
+    if (!entry || !entry.dirty) continue;
+    entry.dirty = false;
+    setImmediate(async () => {
+      try {
+        await savePosition(entry.characterId, entry);
+      } catch (err) {
+        console.error(
+          '[sync_characters] periodic position save failed:',
+          err && err.message ? err.message : err,
+        );
+      }
+    });
+  }
+}, POSITION_FLUSH_MS);
+
 on('onResourceStart', (res) => {
   if (res === GetCurrentResourceName()) {
     repo = createCharactersRepo(db(), { maxSlots: maxSlots() });
+    lastPos.clear();
     console.log(`[sync_characters] loaded (slots=${maxSlots()})`);
   }
 });

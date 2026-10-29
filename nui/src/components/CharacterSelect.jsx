@@ -33,7 +33,7 @@ export function CharacterSelect() {
       <ul className="mt-6 space-y-3">
         {characters.length === 0 && (
           <li className="rounded-[var(--sync-radius-md)] border border-dashed border-[var(--sync-glass-border)] px-4 py-8 text-center text-sync-muted">
-            Пока нет персонажей. Создайте первого.
+            Пока нет персонажей. Создайте первого — запись появится в БД.
           </li>
         )}
         {characters.map((c, i) => (
@@ -48,6 +48,7 @@ export function CharacterSelect() {
               </div>
               <div className="font-mono text-xs text-sync-subtle">
                 #{c.id} · слот {c.slot} · {c.gender} · {c.dateOfBirth}
+                {c.position ? ' · позиция в БД' : ''}
               </div>
             </div>
             <div className="flex gap-2">
@@ -57,7 +58,7 @@ export function CharacterSelect() {
                 disabled={loading}
                 onClick={() => selectCharacter(c.id)}
               >
-                {selectedId === c.id && loading ? 'Вход…' : 'Играть'}
+                {selectedId === c.id && loading ? 'Вход…' : 'Войти'}
               </button>
               <button
                 type="button"

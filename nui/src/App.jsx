@@ -8,31 +8,44 @@ export default function App() {
   const visible = useSyncStore((s) => s.visible);
   const view = useSyncStore((s) => s.view);
   const error = useSyncStore((s) => s.error);
-  const setVisible = useSyncStore((s) => s.setVisible);
+  const isNewAccount = useSyncStore((s) => s.isNewAccount);
+  const mustSelect = useSyncStore((s) => s.mustSelect);
+  const forceCreate = useSyncStore((s) => s.forceCreate);
+  const openShell = useSyncStore((s) => s.openShell);
   const refreshList = useSyncStore((s) => s.refreshList);
 
   useEffect(() => {
     return onNuiMessage((data) => {
       if (!data || typeof data !== 'object') return;
       if (data.action === 'openCharacters') {
-        setVisible(true);
+        openShell({
+          isNewAccount: !!data.isNewAccount,
+          mustSelect: !!data.mustSelect,
+          forceCreate: !!data.forceCreate,
+        });
         refreshList();
       }
       if (data.action === 'close') {
-        setVisible(false);
+        useSyncStore.setState({ visible: false, mustSelect: false });
       }
     });
-  }, [setVisible, refreshList]);
+  }, [openShell, refreshList]);
 
   // Vite/dev convenience
   useEffect(() => {
     if (import.meta.env.DEV && !window.invokeNative) {
-      setVisible(true);
+      openShell({ isNewAccount: false, mustSelect: false });
       refreshList();
     }
-  }, [setVisible, refreshList]);
+  }, [openShell, refreshList]);
 
   if (!visible) return null;
+
+  const registration = isNewAccount || forceCreate;
+  const headline = registration ? 'Регистрация персонажа' : 'Вход в город';
+  const subtitle = registration
+    ? 'Аккаунт привязан к вашему FiveM license. Создайте персонажа — данные сохранятся в базе.'
+    : 'Выберите персонажа, чтобы продолжить. Прогресс и позиция сохраняются в БД.';
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
@@ -56,9 +69,15 @@ export default function App() {
           <p className="font-display text-4xl font-extrabold tracking-tight text-sync-text md:text-5xl">
             Sync<span className="text-sync-accent">RP</span>
           </p>
-          <p className="mt-2 max-w-md text-sm text-sync-muted md:text-base">
-            Выберите персонажа, чтобы войти в город. Русский интерфейс по умолчанию.
-          </p>
+          <h1 className="mt-3 font-display text-xl font-semibold text-sync-text md:text-2xl">
+            {headline}
+          </h1>
+          <p className="mt-2 max-w-md text-sm text-sync-muted md:text-base">{subtitle}</p>
+          {mustSelect && (
+            <p className="mt-2 text-xs text-sync-subtle">
+              Закрыть экран нельзя, пока персонаж не выбран.
+            </p>
+          )}
         </header>
 
         {error && (

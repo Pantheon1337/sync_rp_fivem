@@ -10,8 +10,21 @@
 | `nui/` | React + Vite + Tailwind + Zustand |
 | `sync_nui` | ui_page + NUI bridge, RU, dark glass + blue |
 | Character UI | list / create / select / delete |
+| Auth UX | license → account → регистрация/вход персонажа (без email/пароля) |
+| Position | autosave + flush в `characters.position_*` на disconnect |
 | Chat commands | остаются как fallback (`/chars`, `/charsui`) |
 | Appearance editor | **нет** (позже); дефолт-модели — story peds (видимые) |
+
+## Поток игрока
+
+1. `playerConnecting` — SyncCore проверяет/создаёт `accounts` + `account_identifiers` по FiveM identifiers (license и др.).
+2. `playerJoining` — открывается `sessions`, `sync:core:playerRegistered`.
+3. `sync_nui` открывает NUI:
+   - новый аккаунт → **Регистрация персонажа** (форма создания, закрыть нельзя);
+   - есть персонажи → **Вход в город** (список, закрыть нельзя пока не выбран).
+4. Create → INSERT в `characters` → сразу select + spawn.
+5. Select → `sessions.character_id`, spawn по `position_*` или default.
+6. В мире: клиент каждые 30с шлёт coords; на disconnect позиция пишется в БД.
 
 ## Build NUI
 
@@ -44,11 +57,16 @@ ensure sync_nui
 
 ## PO test
 
-1. `connect 127.0.0.1:30120`  
-2. После входа открывается NUI выбора персонажа (бренд SyncRP)  
-3. Создать / выбрать → спавн, NUI закрывается  
-4. Видна модель (hipster ped, не «пустой» freemode)  
-5. Fallback: `/charsui` снова открывает UI  
+1. `connect 127.0.0.1:30120`
+2. Первый заход (новый license): NUI **Регистрация** → создать персонажа → сразу спавн
+3. Проверка БД:
+   ```sql
+   SELECT id, first_name, last_name, slot FROM characters;
+   SELECT id, account_id, character_id FROM sessions ORDER BY id DESC LIMIT 3;
+   ```
+4. Походить, отключиться, снова зайти → **Вход** → выбрать → спавн у сохранённой позиции (`position_x/y/z` не NULL)
+5. Модель видна (hipster ped)
+6. Fallback: `/charsui` снова открывает UI (после входа можно закрыть)
 
 ## Playwright (host)
 
@@ -60,8 +78,9 @@ npm.cmd run test:e2e
 
 ## DoD
 
-- [ ] NUI build в `sync_nui/html`  
-- [ ] Character flow через NUI  
-- [ ] Design tokens SyncRP (dark glass + blue)  
-- [ ] Playwright smoke green  
-- [ ] PO smoke comment on PR  
+- [x] NUI build в `sync_nui/html`
+- [x] Character flow через NUI (регистрация / вход)
+- [x] Design tokens SyncRP (dark glass + blue)
+- [x] Position save on disconnect + periodic
+- [x] Playwright smoke green
+- [ ] PO smoke comment on PR

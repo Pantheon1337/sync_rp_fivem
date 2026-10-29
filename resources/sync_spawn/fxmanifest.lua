@@ -4,7 +4,7 @@ game 'gta5'
 name 'sync_spawn'
 author 'SyncRP'
 description 'SyncCore character spawn'
-version '0.2.2'
+version '0.3.0'
 
 node_version '22'
 

@@ -60,8 +60,8 @@ PO: Pantheon Ai. Следующий этап не стартует без под
 ## Stage 3 — NUI shell *(in progress)*
 
 **Depends:** Stage 2.  
-**Scope:** React+Vite+Tailwind+Zustand в `nui/`; `sync_nui`; RU strings; design tokens из UI_DESIGN_SYSTEM.  
-**DoD:** character UI через NUI; Playwright smoke на static build; тема dark glass + blue.  
+**Scope:** React+Vite+Tailwind+Zustand в `nui/`; `sync_nui`; RU; design tokens; registration/login gate; position save.  
+**DoD:** character UI через NUI; create/select → DB; position на disconnect; Playwright smoke; тема dark glass + blue.  
 **Детали:** [SPRINT3.md](./SPRINT3.md).
 
 ---
