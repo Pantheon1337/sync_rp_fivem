@@ -20,6 +20,13 @@ function hashEndpoint(endpoint) {
 }
 
 async function openSession(accountId, serverId, endpoint) {
+  // Close any stale open rows for this account (e.g. crash / old connecting-id bug)
+  await exports.sync_db.query(
+    `UPDATE sessions SET disconnected_at = UTC_TIMESTAMP(3), disconnect_reason = ?
+     WHERE account_id = ? AND disconnected_at IS NULL`,
+    ['superseded', accountId],
+  );
+
   const endpointHash = hashEndpoint(endpoint);
   const rows = await exports.sync_db.query(
     `INSERT INTO sessions (account_id, character_id, server_id, endpoint_hash)
@@ -32,13 +39,15 @@ async function openSession(accountId, serverId, endpoint) {
   return { sessionId, accountId, serverId };
 }
 
-async function closeSession(serverId, reason) {
+async function closeSession(serverId, reason, accountId) {
   const mem = tracker.close(serverId);
+  const why = reason || 'dropped';
+
   if (mem.missing || mem.alreadyClosed) {
     await exports.sync_db.query(
       `UPDATE sessions SET disconnected_at = UTC_TIMESTAMP(3), disconnect_reason = ?
-       WHERE server_id = ? AND disconnected_at IS NULL`,
-      [reason || 'unknown', serverId],
+       WHERE disconnected_at IS NULL AND (server_id = ? OR (? IS NOT NULL AND account_id = ?))`,
+      [why, serverId, accountId != null ? accountId : null, accountId != null ? accountId : null],
     );
     tracker.clear(serverId);
     return { ok: true, alreadyClosed: true };
@@ -46,8 +55,8 @@ async function closeSession(serverId, reason) {
 
   await exports.sync_db.query(
     `UPDATE sessions SET disconnected_at = UTC_TIMESTAMP(3), disconnect_reason = ?
-     WHERE id = ? AND disconnected_at IS NULL`,
-    [reason || 'dropped', mem.sessionId],
+     WHERE disconnected_at IS NULL AND (id = ? OR (? IS NOT NULL AND account_id = ?))`,
+    [why, mem.sessionId, accountId != null ? accountId : mem.accountId, accountId != null ? accountId : mem.accountId],
   );
   emit('sync:sessions:closed', {
     sessionId: mem.sessionId,
@@ -65,7 +74,9 @@ function getActiveBySource(serverId) {
 exports('openSession', (accountId, serverId, endpoint) =>
   openSession(accountId, serverId, endpoint),
 );
-exports('closeSession', (serverId, reason) => closeSession(serverId, reason));
+exports('closeSession', (serverId, reason, accountId) =>
+  closeSession(serverId, reason, accountId),
+);
 exports('getActiveBySource', (serverId) => getActiveBySource(serverId));
 
 console.log('[sync_sessions] loaded');

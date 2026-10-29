@@ -27,12 +27,21 @@ async function waitDb(maxMs = 15000) {
   return false;
 }
 
-async function registerPlayer(source) {
+/**
+ * Connecting-phase source IDs are ephemeral (often 65536+).
+ * Only validate/create account here — open session on playerJoining.
+ */
+async function assertAccount(source) {
   const identifiers = getPlayerIdentifiers(String(source));
   const resolved = await exports.sync_identity.resolveAccount(identifiers);
   if (resolved.status !== 'active') {
     throw new Error(`account status=${resolved.status}`);
   }
+  return resolved;
+}
+
+async function registerPlayer(source) {
+  const resolved = await assertAccount(source);
   const endpoint =
     typeof GetPlayerEndpoint === 'function' ? GetPlayerEndpoint(String(source)) : '';
   const session = await exports.sync_sessions.openSession(
@@ -59,8 +68,9 @@ async function registerPlayer(source) {
 
 async function dropPlayer(source, reason) {
   const src = Number(source);
-  emit('sync:core:playerDropped', { source: src, context: registry.get(src) });
-  await exports.sync_sessions.closeSession(src, reason || 'dropped');
+  const ctx = registry.get(src);
+  emit('sync:core:playerDropped', { source: src, context: ctx });
+  await exports.sync_sessions.closeSession(src, reason || 'dropped', ctx && ctx.accountId);
   registry.unregister(src);
 }
 
@@ -87,11 +97,24 @@ on('playerConnecting', (name, _setKickReason, deferrals) => {
         deferrals.done('SyncRP: база данных недоступна. Попробуйте позже.');
         return;
       }
-      await registerPlayer(src);
+      await assertAccount(src);
       deferrals.done();
     } catch (err) {
       console.error('[sync_core] connect failed:', err && err.message ? err.message : err);
       deferrals.done(`SyncRP: ошибка входа (${err && err.message ? err.message : 'unknown'})`);
+    }
+  });
+});
+
+on('playerJoining', () => {
+  const src = global.source;
+  schedule(async () => {
+    try {
+      if (registry.get(src)) return;
+      await registerPlayer(src);
+    } catch (err) {
+      console.error('[sync_core] join failed:', err && err.message ? err.message : err);
+      DropPlayer(String(src), 'SyncRP: ошибка регистрации сессии');
     }
   });
 });

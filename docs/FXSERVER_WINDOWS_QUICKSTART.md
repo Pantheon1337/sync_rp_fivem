@@ -120,7 +120,7 @@ xcopy /E /I /Y F:\SyncRP2.0\sync_rp_fivem\resources\sync_core     F:\SyncRP2.0\s
 
 ### Шаг 5 — `server.cfg` в `F:\SyncRP2.0\sync`
 
-Оставьте Basic-ресурсы (`mapmanager`, `chat`, `spawnmanager`, `basic-gamemode`, `hardcap`).  
+Оставьте Basic-ресурсы (`mapmanager`, `chat`, `spawnmanager`, `basic-gamemode`). Строку `ensure hardcap` уберите, если ресурса нет.  
 **В конец файла** добавьте (пароль = тот же, что в `docker\.env`):
 
 ```cfg
@@ -173,10 +173,18 @@ SELECT id, account_id, server_id, disconnected_at FROM sessions;
 4. **F3** — выйдите с сервера. Снова:
 
 ```sql
-SELECT id, disconnected_at, disconnect_reason FROM sessions ORDER BY id DESC LIMIT 5;
+SELECT id, account_id, server_id, disconnected_at, disconnect_reason FROM sessions ORDER BY id DESC LIMIT 5;
 ```
 
-У последней сессии `disconnected_at` **не NULL**.
+У закрытой сессии `disconnected_at` **не NULL**.  
+`server_id` после join должен быть обычным id игрока (1, 2, …), не `65536` (это был баг connecting-phase — уже исправлен: сессия открывается на `playerJoining`).
+
+Если осталась старая строка с `server_id=65536` и `disconnected_at IS NULL`:
+
+```sql
+UPDATE sessions SET disconnected_at = UTC_TIMESTAMP(3), disconnect_reason = 'manual-cleanup'
+WHERE disconnected_at IS NULL;
+```
 
 Результат кратко напишите в PR: https://github.com/Pantheon1337/sync_rp_fivem/pull/2
 
@@ -211,4 +219,4 @@ cd resources\sync_db; npm ci; cd ..\..
 # перезапуск FXServer
 ```
 
-При junction копировать ресурсы заново не нужно.
+После `git pull` снова выполните `xcopy` из шага 4 (junction не используем).
