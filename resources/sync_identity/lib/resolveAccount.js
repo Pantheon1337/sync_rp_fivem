@@ -5,8 +5,9 @@ const { randomUUID } = require('node:crypto');
 
 // FiveM resolves relative require() from resource root; use absolute when available.
 function loadIdentifiers() {
-  if (typeof GetResourcePath === 'function' && typeof GetCurrentResourceName === 'function') {
-    return require(path.join(GetResourcePath(GetCurrentResourceName()), 'lib', 'identifiers.js'));
+  const g = globalThis;
+  if (typeof g.GetResourcePath === 'function' && typeof g.GetCurrentResourceName === 'function') {
+    return require(path.join(g.GetResourcePath(g.GetCurrentResourceName()), 'lib', 'identifiers.js'));
   }
   return require('./identifiers.js');
 }
