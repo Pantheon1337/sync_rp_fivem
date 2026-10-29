@@ -62,9 +62,10 @@ PO: Pantheon Ai. Следующий этап не стартует без под
 - Деньги: **BIGINT целые рубли (₽)**
 - Seed балансов из `characters.cash/bank`
 - `sync_hud` — варианты: классический (RP), минималистичный, серверный (макеты PO)
-- `sync_bank` — NUI банк: Счета / Перевод / История (макет PO)
+- `sync_bank` — NUI банк (макет PO) + **world locations** (Fleeca/Pacific, ATM models/coords)
+- Исследование паттернов: [BANKS.md](./BANKS.md)
 
-**DoD:** нельзя задюпать повторным event; audit ledger; HUD виден после спавна; bank deposit/withdraw; unit tests.  
+**DoD:** нельзя задюпать повторным event; audit ledger; HUD виден после спавна; bank/ATM interact + deposit/withdraw; unit tests.  
 **Детали:** [SPRINT4.md](./SPRINT4.md).
 
 **Референсы UI:** макеты HUD/банк в store `media/mockups/` (и вложения PO). Чужие закрытые ресурсы не копируем; смотрим паттерны (ledger, ATM flow, property deeds) как идеи, код — свой SyncCore.

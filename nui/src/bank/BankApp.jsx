@@ -74,6 +74,8 @@ const TABS = [
 export default function BankApp() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('accounts');
+  const [locationLabel, setLocationLabel] = useState('');
+  const [locationType, setLocationType] = useState('bank');
   const [cash, setCash] = useState(0);
   const [bank, setBank] = useState(0);
   const [business, setBusiness] = useState(0);
@@ -103,6 +105,8 @@ export default function BankApp() {
         setOpen(true);
         setTab('accounts');
         setError('');
+        setLocationLabel(data.locationLabel || '');
+        setLocationType(data.locationType === 'atm' ? 'atm' : 'bank');
         applyBalances(data.balances);
         setHistory(Array.isArray(data.history) ? data.history : []);
       }
@@ -185,7 +189,14 @@ export default function BankApp() {
     >
       <div className="bank-shell flex flex-col">
         <div className="flex items-center justify-between px-5 pt-5">
-          <h1 className="text-2xl font-bold tracking-tight">Банк</h1>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {locationType === 'atm' ? 'Банкомат' : 'Банк'}
+            </h1>
+            {locationLabel ? (
+              <p className="mt-0.5 text-xs text-white/45">{locationLabel}</p>
+            ) : null}
+          </div>
           <button type="button" className="bank-btn" onClick={close} aria-label="Закрыть">
             Esc
           </button>

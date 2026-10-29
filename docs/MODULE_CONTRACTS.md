@@ -136,14 +136,16 @@ Save appearance → normalize freemode JSON → select + spawn.
 | Command | `/hud` toggle |
 | Net in | `sync:economy:balances`, `sync:hud:setVisible` |
 
-## `sync_bank` (Stage 4)
+## `sync_bank` (Stage 4 / 4.1 locations)
 
-**Владеет:** bank NUI shell.  
+**Владеет:** bank NUI shell + world bank/ATM interact config.  
 **Не владеет:** ledger (только вызывает `sync_economy`).
 
-| Command / key | `/bank`, F6 |
-| Net | `sync:bank:open`, `sync:bank:transfer` |
-| NUI | accounts / transfer / history (RU) |
+| Command / key | `/bank`, F6 (только у точки, если не `sync_bank_allow_remote`) |
+| Interact | E у отделения / ATM |
+| Config | `config/locations.json` (banks, atms, atmModels) |
+| Net | `sync:bank:open` (+spot), `sync:bank:transfer`, `sync:bank:openDenied` |
+| NUI | accounts / transfer / history (RU); title Банк/Банкомат |
 
 ---
 

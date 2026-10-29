@@ -1,0 +1,110 @@
+{
+  "_comment": "Bank/ATM points from public GTA V map data (DurtyFree / common Fleeca branch counters). Not copied from QB/ESX scripts. UI stays SyncRP dark glass.",
+  "interactRadius": 2.2,
+  "serverRadius": 3.5,
+  "drawDistance": 25.0,
+  "atmModels": [
+    "prop_atm_01",
+    "prop_atm_02",
+    "prop_atm_03",
+    "prop_fleeca_atm"
+  ],
+  "banks": [
+    {
+      "id": "fleeca_legion",
+      "label": "Fleeca — Legion Square",
+      "type": "bank",
+      "x": 149.5,
+      "y": -1040.5,
+      "z": 29.37,
+      "blip": true
+    },
+    {
+      "id": "fleeca_hawick",
+      "label": "Fleeca — Hawick",
+      "type": "bank",
+      "x": 314.18,
+      "y": -279.03,
+      "z": 54.17,
+      "blip": true
+    },
+    {
+      "id": "fleeca_lifeinvader",
+      "label": "Fleeca — Life Invader",
+      "type": "bank",
+      "x": -350.83,
+      "y": -49.61,
+      "z": 49.04,
+      "blip": true
+    },
+    {
+      "id": "fleeca_delperro",
+      "label": "Fleeca — Boulevard Del Perro",
+      "type": "bank",
+      "x": -1212.98,
+      "y": -330.84,
+      "z": 37.79,
+      "blip": true
+    },
+    {
+      "id": "fleeca_great_ocean",
+      "label": "Fleeca — Great Ocean Hwy",
+      "type": "bank",
+      "x": -2962.6,
+      "y": 482.9,
+      "z": 15.7,
+      "blip": true
+    },
+    {
+      "id": "fleeca_route68",
+      "label": "Fleeca — Route 68",
+      "type": "bank",
+      "x": 1175.07,
+      "y": 2706.8,
+      "z": 38.09,
+      "blip": true
+    },
+    {
+      "id": "fleeca_paleto",
+      "label": "Fleeca — Paleto Bay",
+      "type": "bank",
+      "x": -112.22,
+      "y": 6469.29,
+      "z": 31.63,
+      "blip": true
+    },
+    {
+      "id": "pacific_standard",
+      "label": "Pacific Standard — Vinewood",
+      "type": "bank",
+      "x": 241.73,
+      "y": 225.04,
+      "z": 106.29,
+      "blip": true
+    }
+  ],
+  "atms": [
+    { "id": "atm_pillbox_fleeca_a", "label": "Банкомат", "type": "atm", "x": 145.84, "y": -1035.63, "z": 28.37 },
+    { "id": "atm_pillbox_fleeca_b", "label": "Банкомат", "type": "atm", "x": 147.47, "y": -1036.22, "z": 28.37 },
+    { "id": "atm_rockford_fleeca_a", "label": "Банкомат", "type": "atm", "x": -1205.38, "y": -326.53, "z": 36.85 },
+    { "id": "atm_rockford_fleeca_b", "label": "Банкомат", "type": "atm", "x": -1206.14, "y": -325.03, "z": 36.85 },
+    { "id": "atm_legion_metro", "label": "Банкомат", "type": "atm", "x": 147.47, "y": -1036.22, "z": 28.37 },
+    { "id": "atm_mission_row_a", "label": "Банкомат", "type": "atm", "x": 296.18, "y": -896.23, "z": 28.29 },
+    { "id": "atm_mission_row_b", "label": "Банкомат", "type": "atm", "x": 296.88, "y": -894.32, "z": 28.26 },
+    { "id": "atm_strawberry_24_7", "label": "Банкомат", "type": "atm", "x": 33.19, "y": -1348.81, "z": 28.5 },
+    { "id": "atm_pillbox_a", "label": "Банкомат", "type": "atm", "x": -301.66, "y": -829.59, "z": 31.42 },
+    { "id": "atm_pillbox_b", "label": "Банкомат", "type": "atm", "x": -259.28, "y": -723.27, "z": 32.7 },
+    { "id": "atm_pillbox_c", "label": "Банкомат", "type": "atm", "x": 24.59, "y": -945.54, "z": 28.33 },
+    { "id": "atm_maze_a", "label": "Банкомат", "type": "atm", "x": -273.37, "y": -2024.21, "z": 29.17 },
+    { "id": "atm_pacific_lobby_a", "label": "Банкомат", "type": "atm", "x": 237.41, "y": 218.95, "z": 105.41 },
+    { "id": "atm_pacific_lobby_b", "label": "Банкомат", "type": "atm", "x": 265.56, "y": 211.86, "z": 105.41 },
+    { "id": "atm_vespucci", "label": "Банкомат", "type": "atm", "x": -821.89, "y": -1081.55, "z": 10.14 },
+    { "id": "atm_delperro_a", "label": "Банкомат", "type": "atm", "x": -1315.42, "y": -834.43, "z": 15.95 },
+    { "id": "atm_little_seoul", "label": "Банкомат", "type": "atm", "x": -718.26, "y": -915.71, "z": 18.22 },
+    { "id": "atm_mirror_park", "label": "Банкомат", "type": "atm", "x": 1153.11, "y": -326.9, "z": 68.21 },
+    { "id": "atm_sandy", "label": "Банкомат", "type": "atm", "x": 1968.39, "y": 3743.08, "z": 31.34 },
+    { "id": "atm_paleto", "label": "Банкомат", "type": "atm", "x": -97.64, "y": 6455.73, "z": 30.47 },
+    { "id": "atm_route68", "label": "Банкомат", "type": "atm", "x": 1171.52, "y": 2703.14, "z": 37.15 },
+    { "id": "atm_airport", "label": "Банкомат", "type": "atm", "x": -1044.47, "y": -2739.64, "z": 8.12 }
+  ]
+}
