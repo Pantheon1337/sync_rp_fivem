@@ -1,0 +1,14 @@
+---
+description: Enforce SyncRP module contracts and data ownership
+globs:
+  - resources/**/*
+  - database/**/*
+---
+
+# Module contracts
+
+- Before adding events/exports/tables, update `docs/MODULE_CONTRACTS.md` and `docs/DATABASE.md` in the same change set when contracts shift.
+- Do not SQL into tables owned by another resource; call the owner’s exports.
+- Net events from clients must validate payload, bind to `sync_core.getContext(source)`, and rate-limit sensitive actions.
+- Economy mutations (Stage 4+) require ledger + idempotency_key inside a transaction.
+- Place new FiveM resources under `resources/sync_<name>/` with `fxmanifest.lua` (`fx_version 'cerulean'`, `game 'gta5'`).

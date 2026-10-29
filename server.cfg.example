@@ -1,0 +1,25 @@
+# SyncRP FXServer example — Stage 0 template (expand in Stage 1).
+# Copy to your server data directory; do not commit real license keys.
+
+endpoint_add_tcp "0.0.0.0:30120"
+endpoint_add_udp "0.0.0.0:30120"
+
+sv_hostname "SyncRP Dev"
+sets sv_projectName "SyncRP"
+sets locale "ru-RU"
+sv_maxclients 32
+
+# OneSync required for SyncCore entity/state assumptions
+set onesync on
+
+# MariaDB DSN — set via env or local cfg include; never commit secrets
+# set sync_db_dsn "mysql://syncrp:CHANGEME@127.0.0.1:3306/syncrp"
+
+# Min build note: Node 22 resources need FXServer build >= 12913
+# ensure yarn
+# ensure sync_db
+# ensure sync_identity
+# ensure sync_sessions
+# ensure sync_core
+
+# sv_licenseKey "CHANGEME"

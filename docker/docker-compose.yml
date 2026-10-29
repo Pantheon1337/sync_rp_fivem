@@ -1,0 +1,31 @@
+# Local MariaDB for SyncRP Stage 1+ development.
+# Copy .env.example → .env and adjust. Do not commit .env.
+
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: syncrp-mariadb
+    restart: unless-stopped
+    ports:
+      - '${SYNC_DB_PORT:-3306}:3306'
+    environment:
+      MARIADB_DATABASE: ${SYNC_DB_NAME:-syncrp}
+      MARIADB_USER: ${SYNC_DB_USER:-syncrp}
+      MARIADB_PASSWORD: ${SYNC_DB_PASSWORD:-changeme}
+      MARIADB_ROOT_PASSWORD: ${SYNC_DB_ROOT_PASSWORD:-changeme_root}
+    volumes:
+      - syncrp_mariadb_data:/var/lib/mysql
+      # Optional: mount migrations for manual apply in Stage 1
+      - ../database/migrations:/migrations:ro
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=256M
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  syncrp_mariadb_data:

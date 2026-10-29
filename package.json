@@ -1,0 +1,29 @@
+{
+  "name": "sync_rp_fivem",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "SyncRP FiveM — Stage 0 tooling (SyncCore runtime arrives in Stage 1)",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.13.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "vitest": "5.0.5"
+  },
+  "syncrpNotes": {
+    "playwright": "Add playwright@1.64.1 in Stage 3 with NUI; see docs/TESTING.md and .github/workflows/nui-playwright.yml stub",
+    "fivemRuntime": "Resource server scripts target Node 22 via fxmanifest node_version; root tooling uses Node >=20"
+  }
+}
