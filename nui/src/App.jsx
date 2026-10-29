@@ -60,15 +60,15 @@ export default function App() {
   const registration = isNewAccount || forceCreate;
   const appearanceMode = view === 'appearance';
   const headline = appearanceMode
-    ? 'Внешность'
+    ? 'Редактор персонажа'
     : registration
-      ? 'Регистрация'
+      ? 'Регистрация персонажа'
       : 'Выбор персонажа';
   const subtitle = appearanceMode
-    ? 'Настройте лицо, волосы, одежду и аксессуары.'
+    ? 'Лицо, волосы, одежда и аксессуары — freemode.'
     : registration
-      ? 'Создайте персонажа, чтобы войти в город.'
-      : 'Выберите слот или создайте нового персонажа.';
+      ? 'Аккаунт привязан к FiveM license. Создайте персонажа — данные сохранятся в базе.'
+      : 'Выберите персонажа, чтобы продолжить. Прогресс и позиция сохраняются в БД.';
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">

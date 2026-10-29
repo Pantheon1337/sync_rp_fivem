@@ -14,10 +14,18 @@ local function streetNames()
   return street, crossing
 end
 
---- Keep native GTA health / armour / radar; only hide cash/wanted if we draw our own later.
+--- Keep native GTA health / armour / radar; hide native street/area (we draw street in Sync HUD).
 local function ensureNativeVitalHud()
-  -- Do not hide HUD components 3 (cash) aggressively; GTA health/armour bars stay.
   DisplayRadar(true)
+  -- 7 = AREA_NAME, 9 = STREET_NAME (bottom-right native location)
+  HideHudComponentThisFrame(7)
+  HideHudComponentThisFrame(9)
+end
+
+--- Infinite stamina — sprint without fatigue.
+local function keepStaminaFull()
+  local pid = PlayerId()
+  RestorePlayerStamina(pid, 1.0)
 end
 
 local function pushHud(extra)
@@ -78,19 +86,26 @@ RegisterCommand('hud', function()
   SendNUIMessage({ action = 'hud:setVisible', visible = hudVisible })
 end, false)
 
+-- Native location hide + stamina must run every frame.
+CreateThread(function()
+  while true do
+    ensureNativeVitalHud()
+    keepStaminaFull()
+    Wait(0)
+  end
+end)
+
 CreateThread(function()
   SetNuiFocus(false, false)
-  ensureNativeVitalHud()
   Wait(1500)
   pushHud()
   while true do
     -- Faster tick so mic icon appears promptly while talking
     Wait(200)
     if hudVisible then
-      ensureNativeVitalHud()
       pushHud()
     end
   end
 end)
 
-print('[sync_hud] client loaded — top-right street/money/mic; needs @ minimap; HP native')
+print('[sync_hud] client loaded — top-right street/money; hide native area; infinite stamina; needs @ minimap')

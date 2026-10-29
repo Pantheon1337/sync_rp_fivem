@@ -139,7 +139,11 @@ function createCharactersRepo(db, options = {}) {
     const lastName = normalizeName(body.lastName);
     const gender = normalizeGender(body.gender);
     const dateOfBirth = normalizeDob(body.dateOfBirth || '1995-01-01');
-    const heightCm = normalizeHeightCm(body.heightCm);
+    // heightCm optional (ESX-identity field retained in DB; registration UI no longer sends it)
+    const heightCm =
+      body.heightCm != null && body.heightCm !== ''
+        ? normalizeHeightCm(body.heightCm)
+        : null;
     const model = gender === 'female' ? FEMALE_MODEL : MALE_MODEL;
 
     const existing = await listByAccount(accountId);
@@ -161,13 +165,15 @@ function createCharactersRepo(db, options = {}) {
         'sync_characters: INSERT не вернул id — проверьте sync_db и npm run migrate',
       );
     }
-    try {
-      await db.query(`UPDATE characters SET height_cm = ? WHERE id = ? AND deleted_at IS NULL`, [
-        heightCm,
-        insertId,
-      ]);
-    } catch {
-      // Column missing until migration 005_character_height — character still created.
+    if (heightCm != null) {
+      try {
+        await db.query(`UPDATE characters SET height_cm = ? WHERE id = ? AND deleted_at IS NULL`, [
+          heightCm,
+          insertId,
+        ]);
+      } catch {
+        // Column missing until migration 005_character_height — character still created.
+      }
     }
     const created = await get(insertId);
     if (!created) {
