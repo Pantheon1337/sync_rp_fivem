@@ -109,6 +109,8 @@ local function openAppearance(character)
   mustSelect = true
   setFocus(true)
   DisplayRadar(false)
+  -- Select overlook cam must die before creator preview, or ped is off-screen.
+  stopSelectCamera()
   local appearance = character and character.appearance
   if appearance == nil then
     local female = character and character.gender == 'female'

@@ -435,24 +435,24 @@ setInterval(() => {
   }
 }, POSITION_FLUSH_MS);
 
-/** Hotreload often leaves sync_nui stopped after characters restart — bring it back. */
-function ensureSyncNui(reason) {
+/** Hotreload can leave dependents stopped — bring spawn + nui back. */
+function ensureResource(name, reason, delayMs) {
   setTimeout(() => {
     try {
-      const state = GetResourceState('sync_nui');
+      const state = GetResourceState(name);
       if (state === 'started' || state === 'starting') {
-        console.log(`[sync_characters] sync_nui already ${state} (${reason})`);
+        console.log(`[sync_characters] ${name} already ${state} (${reason})`);
         return;
       }
-      console.log(`[sync_characters] sync_nui state=${state} → ensure (${reason})`);
-      ExecuteCommand('ensure sync_nui');
+      console.log(`[sync_characters] ${name} state=${state} -> ensure (${reason})`);
+      ExecuteCommand(`ensure ${name}`);
     } catch (err) {
       console.error(
-        '[sync_characters] ensure sync_nui failed:',
+        `[sync_characters] ensure ${name} failed:`,
         err && err.message ? err.message : err,
       );
     }
-  }, 800);
+  }, delayMs);
 }
 
 on('onResourceStart', (res) => {
@@ -462,7 +462,8 @@ on('onResourceStart', (res) => {
       repo = createCharactersRepo(db(), { maxSlots: maxSlots() });
       lastPos.clear();
       console.log(`[sync_characters] loaded (slots=${maxSlots()}) create=hardened`);
-      ensureSyncNui('characters-start');
+      ensureResource('sync_spawn', 'characters-start', 500);
+      ensureResource('sync_nui', 'characters-start', 900);
     } catch (err) {
       console.error(
         '[sync_characters] reload failed:',

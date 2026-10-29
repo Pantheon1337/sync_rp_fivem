@@ -4,7 +4,7 @@ game 'gta5'
 name 'sync_spawn'
 author 'SyncRP'
 description 'SyncCore character spawn'
-version '0.3.2'
+version '0.3.3'
 
 node_version '22'
 
@@ -14,7 +14,6 @@ client_scripts {
     'client/main.lua',
 }
 
--- Only depend on resources that also run on the client.
--- sync_core is server_only — do not list it here (breaks client join).
-dependency 'sync_characters'
+-- Soft order in server.cfg / hotreload only.
+-- Hard dependency on sync_characters made restart characters stop spawn permanently.
 dependency '/server:12913'

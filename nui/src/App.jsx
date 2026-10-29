@@ -95,11 +95,14 @@ export default function App() {
             <p className="mt-2 max-w-md text-sm text-sync-muted md:text-base">{subtitle}</p>
           </header>
 
-          {error && (
-            <div className="mb-4 animate-fade-in rounded-[var(--sync-radius-md)] border border-sync-danger/40 bg-sync-danger/10 px-4 py-3 text-sm text-sync-danger">
-              {error}
-            </div>
-          )}
+          {/* Reserved strip - avoids layout jump when error appears */}
+          <div className="mb-4 min-h-[3.25rem]">
+            {error ? (
+              <div className="animate-fade-in rounded-[var(--sync-radius-md)] border border-sync-danger/40 bg-sync-danger/10 px-4 py-3 text-sm text-sync-danger">
+                {error}
+              </div>
+            ) : null}
+          </div>
 
           {view === 'list' && <CharacterSelect />}
           {view === 'create' && <CharacterCreate />}
