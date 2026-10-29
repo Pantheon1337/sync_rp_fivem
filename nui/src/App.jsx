@@ -60,15 +60,15 @@ export default function App() {
   const registration = isNewAccount || forceCreate;
   const appearanceMode = view === 'appearance';
   const headline = appearanceMode
-    ? 'Редактор персонажа'
+    ? 'Внешность'
     : registration
-      ? 'Регистрация персонажа'
-      : 'Вход в город';
+      ? 'Регистрация'
+      : 'Выбор персонажа';
   const subtitle = appearanceMode
-    ? 'Лицо, волосы, одежда и аксессуары — как в классических RP-фреймворках на freemode.'
+    ? 'Настройте лицо, волосы, одежду и аксессуары.'
     : registration
-      ? 'Аккаунт привязан к вашему FiveM license. Создайте персонажа — данные сохранятся в базе.'
-      : 'Выберите персонажа, чтобы продолжить. Прогресс и позиция сохраняются в БД.';
+      ? 'Создайте персонажа, чтобы войти в город.'
+      : 'Выберите слот или создайте нового персонажа.';
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
@@ -84,7 +84,7 @@ export default function App() {
       <div
         className={`relative z-10 flex min-h-screen ${appearanceMode ? 'justify-start' : 'justify-center'} px-5 py-10`}
       >
-        <div className={`flex w-full flex-col justify-center ${appearanceMode ? 'max-w-xl' : 'max-w-3xl'}`}>
+        <div className={`flex w-full flex-col justify-center ${appearanceMode ? 'max-w-xl' : 'max-w-4xl'}`}>
           <header className="mb-6 animate-fade-up">
             <p className="font-display text-4xl font-extrabold tracking-tight text-sync-text md:text-5xl">
               Sync<span className="text-sync-accent">RP</span>
@@ -93,11 +93,6 @@ export default function App() {
               {headline}
             </h1>
             <p className="mt-2 max-w-md text-sm text-sync-muted md:text-base">{subtitle}</p>
-            {mustSelect && !appearanceMode && (
-              <p className="mt-2 text-xs text-sync-subtle">
-                Пока меню открыто, чат (T) недоступен — так и задумано. Выберите персонажа.
-              </p>
-            )}
           </header>
 
           {error && (

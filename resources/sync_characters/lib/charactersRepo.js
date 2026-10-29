@@ -19,7 +19,13 @@ function loadAppearance() {
   return require('./appearance.js');
 }
 
-const { normalizeName, normalizeGender, normalizeDob, nextFreeSlot } = loadValidate();
+const {
+  normalizeName,
+  normalizeGender,
+  normalizeDob,
+  normalizeHeightCm,
+  nextFreeSlot,
+} = loadValidate();
 const {
   MALE_MODEL,
   FEMALE_MODEL,
@@ -49,6 +55,7 @@ function rowToCharacter(row) {
     lastName: row.last_name,
     dateOfBirth: formatDob(row.date_of_birth),
     gender,
+    heightCm: row.height_cm != null ? Number(row.height_cm) : null,
     cash: Number(row.cash),
     bank: Number(row.bank),
     position:
@@ -63,6 +70,8 @@ function rowToCharacter(row) {
     model: row.model || (appearance && appearance.model) || null,
     appearance,
     needsAppearance: appearance == null,
+    createdAt: row.created_at != null ? String(row.created_at) : null,
+    updatedAt: row.updated_at != null ? String(row.updated_at) : null,
   };
 }
 
@@ -95,6 +104,7 @@ function createCharactersRepo(db, options = {}) {
     const lastName = normalizeName(input.lastName);
     const gender = normalizeGender(input.gender);
     const dateOfBirth = normalizeDob(input.dateOfBirth || '1995-01-01');
+    const heightCm = normalizeHeightCm(input.heightCm);
     const model = gender === 'female' ? FEMALE_MODEL : MALE_MODEL;
 
     const existing = await listByAccount(accountId);
@@ -107,16 +117,32 @@ function createCharactersRepo(db, options = {}) {
     }
 
     const uuid = randomUUID();
-    const result = await db.transaction([
-      {
-        sql: `INSERT INTO characters
-          (uuid, account_id, slot, first_name, last_name, date_of_birth, gender, model, appearance_json)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
-        params: [uuid, accountId, slot, firstName, lastName, dateOfBirth, gender, model],
-      },
-    ]);
-    const id = Number(result[0].insertId);
-    return get(id);
+    let insertId;
+    try {
+      const result = await db.transaction([
+        {
+          sql: `INSERT INTO characters
+            (uuid, account_id, slot, first_name, last_name, date_of_birth, gender, height_cm, model, appearance_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+          params: [uuid, accountId, slot, firstName, lastName, dateOfBirth, gender, heightCm, model],
+        },
+      ]);
+      insertId = Number(result[0].insertId);
+    } catch (err) {
+      // Pre-005 schema without height_cm — still create; migrate 005 when ready.
+      const msg = err && err.message ? String(err.message) : String(err);
+      if (!/height_cm/i.test(msg) && !/Unknown column/i.test(msg)) throw err;
+      const result = await db.transaction([
+        {
+          sql: `INSERT INTO characters
+            (uuid, account_id, slot, first_name, last_name, date_of_birth, gender, model, appearance_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+          params: [uuid, accountId, slot, firstName, lastName, dateOfBirth, gender, model],
+        },
+      ]);
+      insertId = Number(result[0].insertId);
+    }
+    return get(insertId);
   }
 
   async function softDelete(accountId, characterId) {

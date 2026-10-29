@@ -6,6 +6,21 @@ function formatRub(n) {
   return `₽ ${grouped}`;
 }
 
+function reasonLabel(code) {
+  const map = {
+    bank_deposit: 'Пополнение счёта',
+    bank_withdraw: 'Снятие наличных',
+    transfer: 'Перевод',
+    seed: 'Стартовый баланс',
+  };
+  return map[code] || 'Операция';
+}
+
+function accountLabel(type) {
+  const map = { cash: 'Наличные', bank: 'Банк', business: 'Бизнес', org: 'Организация' };
+  return map[type] || 'Счёт';
+}
+
 function newIdempotency(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -305,7 +320,7 @@ export default function BankApp() {
                 <input
                   className="bank-input mt-1"
                   inputMode="numeric"
-                  placeholder="например 5000"
+                  placeholder="Сумма"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
@@ -367,9 +382,9 @@ export default function BankApp() {
                 history.map((h) => (
                   <div key={h.id} className="bank-card flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-sm font-medium">{h.reasonCode}</div>
+                      <div className="text-sm font-medium">{reasonLabel(h.reasonCode)}</div>
                       <div className="text-xs text-white/40">
-                        {(h.fromType || 'система') + ' → ' + (h.toType || 'система')}
+                        {accountLabel(h.fromType)} → {accountLabel(h.toType)}
                       </div>
                     </div>
                     <div className="tabular-nums font-semibold">{formatRub(h.amount)}</div>

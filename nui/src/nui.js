@@ -51,7 +51,11 @@ const mockState = {
       lastName: 'Петров',
       gender: 'male',
       dateOfBirth: '1990-05-01',
+      heightCm: 178,
+      cash: 2500,
+      bank: 12000,
       position: null,
+      updatedAt: new Date().toISOString(),
     },
   ],
 };
@@ -76,7 +80,12 @@ function mockNui(event, data) {
       lastName: data.lastName,
       gender: data.gender,
       dateOfBirth: data.dateOfBirth,
+      heightCm: data.heightCm || 175,
+      cash: 0,
+      bank: 0,
       position: null,
+      needsAppearance: true,
+      updatedAt: new Date().toISOString(),
     };
     mockState.characters.push(character);
     return { ok: true, character };

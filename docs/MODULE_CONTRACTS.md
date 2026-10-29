@@ -85,7 +85,9 @@ Host CLI: `SYNC_DB_DSN=… npm run migrate` (`scripts/migrate.cjs`).
 | Net | `list/create/select/delete/savePosition/saveAppearance` (+ `reqId` для NUI) |
 | Events | `sync:characters:selected`, `sync:characters:created` |
 
-Валидация имён/слотов на сервере. Select без `appearance_json` → `needsAppearance` (редактор).  
+Валидация имён/слотов/роста (`height_cm`, migration 005) на сервере. Select без `appearance_json` → `needsAppearance` (редактор).  
+NUI multichar: слот-карточки (ESX-паттерн), без debug id в UI. SyncCore остаётся ядром — без `es_extended`.  
+
 Save appearance → normalize freemode JSON → select + spawn.  
 Позиция: autosave + flush на `sync:core:playerDropped`.
 

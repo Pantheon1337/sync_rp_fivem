@@ -27,17 +27,12 @@ RegisterNetEvent('sync:characters:listResult', function(res)
   end
   local lines = {}
   for _, c in ipairs(res.characters) do
-    lines[#lines + 1] = ('#%s слот %s: %s %s (%s)'):format(
-      c.id,
-      c.slot,
-      c.firstName,
-      c.lastName,
-      c.gender
-    )
+    lines[#lines + 1] = ('Слот %s: %s %s'):format(c.slot, c.firstName, c.lastName)
   end
   notify(
-    ('Персонажи (макс. %s):\n%s\nВыбор: /charselect ID'):format(
-      res.maxSlots or '?',
+    ('Персонажи (%s/%s):\n%s\nВыбор: /charselect <id>'):format(
+      tostring(#res.characters),
+      tostring(res.maxSlots or '?'),
       table.concat(lines, '\n')
     )
   )
@@ -52,7 +47,7 @@ RegisterNetEvent('sync:characters:createResult', function(res)
     return
   end
   local c = res.character
-  notify(('Создан #%s %s %s. /charselect %s'):format(c.id, c.firstName, c.lastName, c.id))
+  notify(('Создан персонаж %s %s (слот %s)'):format(c.firstName, c.lastName, tostring(c.slot)))
 end)
 
 RegisterNetEvent('sync:characters:selectResult', function(res)
@@ -75,12 +70,12 @@ RegisterNetEvent('sync:characters:deleteResult', function(res)
     notify(('Удаление: %s'):format(res and res.error or 'ошибка'))
     return
   end
-  notify('Персонаж удалён (soft delete)')
+  notify('Персонаж удалён')
 end)
 
 RegisterNetEvent('sync:characters:selected', function(ch)
   if type(ch) == 'table' and ch.firstName then
-    notify(('Спавн: %s %s'):format(ch.firstName, ch.lastName))
+    notify(('Добро пожаловать, %s %s'):format(ch.firstName, ch.lastName))
   end
 end)
 

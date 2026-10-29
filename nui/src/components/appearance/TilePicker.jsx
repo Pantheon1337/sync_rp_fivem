@@ -121,9 +121,7 @@ export function ColorSwatchGrid({ label, value, count = 64, onChange, colors }) 
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-medium text-sync-muted">{label}</p>
-        <p className="font-mono text-xs text-sync-subtle">
-          #{value} · {palette.length} цветов
-        </p>
+        <p className="text-xs text-sync-subtle">{palette.length} оттенков</p>
       </div>
       <div className="sync-scroll grid max-h-40 grid-cols-8 gap-1.5 overflow-y-auto pr-1">
         {palette.map((hex, i) => {

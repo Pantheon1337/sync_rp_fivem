@@ -2,7 +2,13 @@ import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 
 const require = createRequire(import.meta.url);
-const { normalizeName, normalizeGender, normalizeDob, nextFreeSlot } = require('./validate.js');
+const {
+  normalizeName,
+  normalizeGender,
+  normalizeDob,
+  normalizeHeightCm,
+  nextFreeSlot,
+} = require('./validate.js');
 
 describe('character validation', () => {
   it('normalizes cyrillic names', () => {
@@ -19,6 +25,12 @@ describe('character validation', () => {
 
   it('rejects bad dob / underage', () => {
     expect(() => normalizeDob('2015-01-01')).toThrow(/18–90/);
+  });
+
+  it('normalizes height cm', () => {
+    expect(normalizeHeightCm(175)).toBe(175);
+    expect(normalizeHeightCm(null)).toBe(175);
+    expect(() => normalizeHeightCm(90)).toThrow(/рост/);
   });
 
   it('finds next free slot', () => {

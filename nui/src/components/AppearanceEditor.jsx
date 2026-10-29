@@ -116,8 +116,7 @@ export function AppearanceEditor() {
         <div>
           <h2 className="font-display text-xl font-bold text-sync-text">Внешность</h2>
           <p className="mt-1 text-sm text-sync-muted">
-            {character.firstName} {character.lastName} — плитки стилей (скриншоты на плитки добавим
-            позже). Листайте страницы, если вариантов много.
+            {character.firstName} {character.lastName}
           </p>
         </div>
         <button type="button" className="sync-btn sync-btn-ghost" onClick={resetDefaults}>

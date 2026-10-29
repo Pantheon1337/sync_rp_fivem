@@ -4,11 +4,47 @@ local announcedReady = false
 local seq = 0
 local pending = {}
 local gateMeta = nil
+-- ESX-multichar style scenic camera (coords inspired by esx_multicharacter Config.Spawn).
+local selectCam = nil
+local SELECT_CAM = { x = -284.29, y = 562.46, z = 173.8, lookX = -284.29, lookY = 560.1, lookZ = 172.9 }
 
 local function setFocus(state)
   nuiOpen = state
   SetNuiFocus(state, state)
   SetNuiFocusKeepInput(false)
+end
+
+local function startSelectCamera()
+  if selectCam and DoesCamExist(selectCam) then
+    return
+  end
+  local ped = PlayerPedId()
+  SetEntityCoordsNoOffset(ped, SELECT_CAM.lookX, SELECT_CAM.lookY, SELECT_CAM.lookZ, false, false, false)
+  SetEntityHeading(ped, 180.0)
+  FreezeEntityPosition(ped, true)
+  selectCam = CreateCamWithParams(
+    'DEFAULT_SCRIPTED_CAMERA',
+    SELECT_CAM.x,
+    SELECT_CAM.y,
+    SELECT_CAM.z,
+    0.0,
+    0.0,
+    0.0,
+    50.0,
+    false,
+    0
+  )
+  PointCamAtCoord(selectCam, SELECT_CAM.lookX, SELECT_CAM.lookY, SELECT_CAM.lookZ + 0.6)
+  SetCamActive(selectCam, true)
+  RenderScriptCams(true, true, 800, true, true)
+end
+
+local function stopSelectCamera()
+  if selectCam and DoesCamExist(selectCam) then
+    RenderScriptCams(false, true, 500, true, true)
+    DestroyCam(selectCam, false)
+  end
+  selectCam = nil
 end
 
 local function resolve(reqId, res)
@@ -42,8 +78,8 @@ local function openCharacters(meta)
   ShutdownLoadingScreen()
   ShutdownLoadingScreenNui()
   DisplayRadar(false)
-  FreezeEntityPosition(PlayerPedId(), true)
   SetPlayerControl(PlayerId(), false, 0)
+  startSelectCamera()
 
   setFocus(true)
   -- CEF sometimes misses the first message — send a few times
@@ -94,6 +130,7 @@ local function closeNui()
   mustSelect = false
   gateMeta = nil
   SyncNuiStopAppearancePreview()
+  stopSelectCamera()
   setFocus(false)
   DisplayRadar(true)
   FreezeEntityPosition(PlayerPedId(), false)

@@ -65,11 +65,29 @@ function nextFreeSlot(usedSlots, maxSlots) {
   return null;
 }
 
+/**
+ * Height in cm (ESX-identity style). Optional — defaults applied by caller.
+ * @param {unknown} value
+ * @param {{ min?: number, max?: number, fallback?: number }} [opts]
+ */
+function normalizeHeightCm(value, opts = {}) {
+  const min = opts.min ?? 140;
+  const max = opts.max ?? 200;
+  const fallback = opts.fallback ?? 175;
+  if (value == null || value === '') return fallback;
+  const n = Math.round(Number(value));
+  if (!Number.isFinite(n) || n < min || n > max) {
+    throw new Error(`sync_characters: рост должен быть ${min}–${max} см`);
+  }
+  return n;
+}
+
 module.exports = {
   NAME_RE,
   GENDERS,
   normalizeName,
   normalizeGender,
   normalizeDob,
+  normalizeHeightCm,
   nextFreeSlot,
 };
