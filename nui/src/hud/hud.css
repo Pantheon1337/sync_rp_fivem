@@ -7,8 +7,9 @@
   --sync-text: #f3f6fb;
   --sync-cash: #4ade80;
   --sync-bank: #e8eef8;
-  --sync-hunger: #60a5fa;
+  --sync-hunger: #f97316;
   --sync-thirst: #38bdf8;
+  --sync-mic: #60a5fa;
 }
 
 * {
@@ -30,7 +31,6 @@ body,
   color-scheme: only light;
 }
 
-/* CEF paints dark rgba + backdrop-filter as opaque black — keep chrome clear */
 .hud-panel {
   background: transparent !important;
   border: none;
@@ -46,41 +46,25 @@ body,
     0 2px 8px rgba(0, 0, 0, 0.85);
 }
 
-.hud-mic {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: transparent !important;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
-}
-
-.hud-mic.talking {
-  border-color: rgba(96, 165, 250, 0.85);
-  color: #93c5fd;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
-}
-
-/* Needs above minimap — icon rings, no dark slab */
+/* Vertical stack to the RIGHT of GTA minimap */
 .hud-needs {
+  position: absolute;
+  left: 18.2vh;
+  bottom: 3.2vh;
   display: flex;
-  flex-direction: row;
-  gap: 0.55rem;
+  flex-direction: column;
+  gap: 0.65rem;
   align-items: center;
 }
 
 .hud-need {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
   display: grid;
   place-items: center;
   position: relative;
   background: transparent !important;
-  /* ring via conic-gradient mask look */
   box-shadow: none;
 }
 
@@ -106,7 +90,7 @@ body,
 
 .hud-need-val {
   position: absolute;
-  bottom: -14px;
+  bottom: -13px;
   left: 50%;
   transform: translateX(-50%);
   font-size: 10px;
@@ -116,4 +100,30 @@ body,
     0 0 2px #000,
     0 1px 2px #000;
   font-variant-numeric: tabular-nums;
+}
+
+/* Mic only while talking — same column as needs */
+.hud-mic-live {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: transparent !important;
+  border: 2px solid var(--sync-mic);
+  color: #93c5fd;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.95));
+  animation: hud-mic-pulse 1s ease-in-out infinite;
+}
+
+@keyframes hud-mic-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.06);
+  }
 }

@@ -59,17 +59,10 @@ function NeedRing({ pct, color, label, children }) {
   );
 }
 
-/** Status icons above GTA minimap (bottom-left). HP stays native GTA. */
-function NeedsNearMinimap({ hunger, thirst }) {
+/** Hunger / thirst / live mic — vertical column RIGHT of minimap. */
+function NeedsNearMinimap({ hunger, thirst, talking }) {
   return (
-    <div
-      className="hud-needs"
-      style={{
-        position: 'absolute',
-        left: '2.4vh',
-        bottom: '22.5vh',
-      }}
-    >
+    <div className="hud-needs">
       <NeedRing pct={hunger} color="var(--sync-hunger)" label="Голод">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
           <path d="M4 3h2v8a3 3 0 0 0 3 3v7H7v-7a3 3 0 0 0-3-3V3Zm14.5 0c-2.5 0-4.5 4-4.5 8v10h2v-6h2v6h2V11c0-4-2-8-4.5-8Z" />
@@ -80,6 +73,11 @@ function NeedsNearMinimap({ hunger, thirst }) {
           <path d="M12 2s6 7 6 12a6 6 0 1 1-12 0c0-5 6-12 6-12Z" />
         </svg>
       </NeedRing>
+      {talking ? (
+        <div className="hud-mic-live" title="Микрофон">
+          <MicIcon />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -103,22 +101,18 @@ const defaultState = {
   date: '',
 };
 
+/** Top-right: money left-stacked under right-aligned street (no persistent mic). */
 function TopRightInfo({ state }) {
   return (
     <div className="hud-panel absolute right-4 top-4 w-[min(300px,90vw)]">
-      <div className="mb-2.5 flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-2">
-          <span className="mt-0.5 text-sky-300" style={{ filter: 'drop-shadow(0 1px 2px #000)' }}>
-            <PinIcon />
-          </span>
-          <div className="hud-text min-w-0">
-            <div className="truncate text-sm font-semibold leading-tight">{state.street}</div>
-            <div className="truncate text-xs text-white/70">{state.crossing}</div>
-          </div>
+      <div className="hud-text mb-2.5 flex items-start justify-end gap-2 text-right">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold leading-tight">{state.street}</div>
+          <div className="truncate text-xs text-white/70">{state.crossing}</div>
         </div>
-        <div className={`hud-mic ${state.talking ? 'talking' : ''}`}>
-          <MicIcon />
-        </div>
+        <span className="mt-0.5 shrink-0 text-sky-300" style={{ filter: 'drop-shadow(0 1px 2px #000)' }}>
+          <PinIcon />
+        </span>
       </div>
 
       <div className="hud-text flex flex-col items-end gap-1 text-sm font-semibold tabular-nums">
@@ -155,23 +149,28 @@ export default function HudApp() {
 
   if (!state.visible) return null;
 
-  // classic + default layout: top-right info, needs @ minimap; HP = native GTA
+  const needs = (
+    <NeedsNearMinimap hunger={state.hunger} thirst={state.thirst} talking={!!state.talking} />
+  );
+
   if (state.variant === 'minimal') {
     return (
       <>
         <div className="hud-panel absolute right-4 top-4">
-          <div className="hud-text flex items-center gap-3">
-            <PinIcon />
+          <div className="hud-text flex items-center justify-end gap-3">
             <span className="text-sm font-semibold tabular-nums">{formatRub(state.cash)}</span>
             <span className="text-sm font-semibold tabular-nums text-white/85">
               {formatRub(state.bank)}
             </span>
-            <div className={`hud-mic ${state.talking ? 'talking' : ''}`}>
-              <MicIcon />
+            <div className="flex items-center gap-1.5 text-right">
+              <div>
+                <div className="text-sm font-semibold leading-tight">{state.street}</div>
+              </div>
+              <PinIcon />
             </div>
           </div>
         </div>
-        <NeedsNearMinimap hunger={state.hunger} thirst={state.thirst} />
+        {needs}
       </>
     );
   }
@@ -181,17 +180,17 @@ export default function HudApp() {
       <>
         <div className="hud-panel absolute right-4 top-4 w-[min(380px,92vw)]">
           <div className="mb-2 flex items-start justify-between gap-3">
-            <div className="hud-text flex items-start gap-2">
-              <span className="mt-0.5 text-sky-300">
-                <PinIcon />
-              </span>
+            <div className="hud-text text-lg font-extrabold tracking-tight">
+              Sync<span style={{ color: 'var(--sync-accent)' }}>RP</span>
+            </div>
+            <div className="hud-text flex items-start justify-end gap-2 text-right">
               <div>
                 <div className="text-sm font-semibold leading-tight">{state.street}</div>
                 <div className="text-xs text-white/65">{state.crossing}</div>
               </div>
-            </div>
-            <div className="hud-text text-right text-lg font-extrabold tracking-tight">
-              Sync<span style={{ color: 'var(--sync-accent)' }}>RP</span>
+              <span className="mt-0.5 text-sky-300">
+                <PinIcon />
+              </span>
             </div>
           </div>
           <div className="hud-text flex items-end justify-between gap-3 text-xs text-white/75">
@@ -207,7 +206,7 @@ export default function HudApp() {
             </div>
           </div>
         </div>
-        <NeedsNearMinimap hunger={state.hunger} thirst={state.thirst} />
+        {needs}
       </>
     );
   }
@@ -215,7 +214,7 @@ export default function HudApp() {
   return (
     <>
       <TopRightInfo state={state} />
-      <NeedsNearMinimap hunger={state.hunger} thirst={state.thirst} />
+      {needs}
     </>
   );
 }

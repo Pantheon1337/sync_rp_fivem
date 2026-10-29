@@ -83,7 +83,8 @@ CreateThread(function()
   Wait(1500)
   pushHud()
   while true do
-    Wait(750)
+    -- Faster tick so mic icon appears promptly while talking
+    Wait(200)
     if hudVisible then
       ensureNativeVitalHud()
       pushHud()
