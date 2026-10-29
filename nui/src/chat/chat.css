@@ -61,38 +61,48 @@ body,
   vertical-align: 1px;
 }
 
-/* Input only when T is pressed — light glass, not a black window */
+/* Input when T is pressed — stock-like, no opaque black slab */
 .chat-input-bar {
   pointer-events: auto;
-  background: rgba(12, 18, 28, 0.55);
-  border: 1px solid rgba(148, 175, 220, 0.22);
-  backdrop-filter: blur(10px);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .chat-input-bar input {
-  background: transparent;
-  border: none;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
   outline: none;
-  color: var(--sync-text);
+  color: #fff;
   width: 100%;
   font: inherit;
   font-size: 0.95rem;
+  padding: 0.45rem 0.6rem;
+  text-shadow:
+    0 0 2px rgba(0, 0, 0, 0.9),
+    0 1px 2px rgba(0, 0, 0, 0.85);
+}
+
+.chat-input-bar input:focus {
+  border-color: rgba(96, 165, 250, 0.55);
+  background: rgba(0, 0, 0, 0.22);
 }
 
 .chat-input-bar input::placeholder {
-  color: var(--sync-subtle);
+  color: rgba(230, 236, 245, 0.45);
 }
 
 .chat-suggest {
   pointer-events: auto;
-  background: rgba(10, 14, 22, 0.82);
-  border: 1px solid rgba(148, 175, 220, 0.2);
-  backdrop-filter: blur(12px);
-  border-radius: 10px;
+  background: rgba(8, 12, 20, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(6px);
+  border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  box-shadow: none;
 }
 
 .chat-tabs {
@@ -103,31 +113,32 @@ body,
 }
 
 .chat-tab {
-  border: 1px solid rgba(148, 175, 220, 0.2);
-  background: rgba(12, 18, 28, 0.45);
-  color: var(--sync-muted);
-  border-radius: 8px;
-  padding: 0.25rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.2);
+  color: rgba(232, 238, 248, 0.85);
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
   font-size: 0.72rem;
   font-weight: 600;
-  backdrop-filter: blur(8px);
+  backdrop-filter: none;
   cursor: pointer;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .chat-tab.active {
-  background: var(--sync-accent);
+  background: rgba(59, 130, 246, 0.75);
   border-color: transparent;
   color: #fff;
 }
 
 .chat-settings {
   pointer-events: auto;
-  background: rgba(10, 14, 22, 0.88);
-  border: 1px solid rgba(148, 175, 220, 0.2);
-  backdrop-filter: blur(14px);
-  border-radius: 12px;
+  background: rgba(8, 12, 20, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
   padding: 0.85rem 1rem;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  box-shadow: none;
 }
 
 .chat-toggle {

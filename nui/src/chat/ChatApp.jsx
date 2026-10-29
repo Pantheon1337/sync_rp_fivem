@@ -292,7 +292,7 @@ export default function ChatApp() {
               </div>
             )}
 
-            <div className="chat-input-bar flex items-center gap-2 px-2 py-1.5">
+            <div className="chat-input-bar flex items-center gap-2">
               <input
                 ref={inputRef}
                 placeholder="Сообщение..."
@@ -306,14 +306,16 @@ export default function ChatApp() {
               <button
                 type="button"
                 onClick={send}
+                title="Отправить"
                 style={{
-                  background: 'var(--sync-accent)',
+                  background: 'rgba(59,130,246,0.55)',
                   color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '0.4rem 0.7rem',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: 4,
+                  padding: '0.45rem 0.65rem',
                   fontWeight: 700,
                   cursor: 'pointer',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.8)',
                 }}
               >
                 →
@@ -321,11 +323,17 @@ export default function ChatApp() {
             </div>
 
             {channels.length <= 1 && (
-              <div className="mt-1 flex gap-1" style={{ pointerEvents: 'auto' }}>
+              <div
+                className="mt-1 flex gap-2"
+                style={{
+                  pointerEvents: 'auto',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.9)',
+                }}
+              >
                 <button type="button" className="chat-tab" onClick={() => setSettingsOpen((v) => !v)}>
-                  ⚙ Настройки
+                  ⚙
                 </button>
-                <span style={{ color: '#7a879c', fontSize: 11, alignSelf: 'center' }}>
+                <span style={{ color: 'rgba(230,236,245,0.55)', fontSize: 11, alignSelf: 'center' }}>
                   Esc — закрыть · /me /do /try
                 </span>
               </div>
