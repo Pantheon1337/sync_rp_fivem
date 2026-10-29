@@ -75,17 +75,18 @@ docker compose -f docker/docker-compose.yml ps
 
 ```powershell
 cd F:\SyncRP2.0\sync_rp_fivem
-npm ci
+# Если PowerShell блокирует npm.ps1 — везде npm.cmd
+npm.cmd ci
 
 $env:SYNC_DB_DSN="mysql://syncrp:ВАШ_ПАРОЛЬ@127.0.0.1:3306/syncrp"
-npm run migrate
+npm.cmd run migrate
 
 cd resources\sync_db
-npm ci
+npm.cmd ci
 cd F:\SyncRP2.0\sync_rp_fivem
 ```
 
-Ожидание: `[migrate] apply 001_accounts_sessions` затем `[migrate] done`.
+Ожидание: `[migrate] apply 001_… (N statements)` / `ok` затем `[migrate] done`.
 
 ---
 
