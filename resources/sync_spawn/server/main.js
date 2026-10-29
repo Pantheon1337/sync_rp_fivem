@@ -54,4 +54,23 @@ async function spawnCharacter(source, characterId) {
 
 exports('spawnCharacter', (source, characterId) => spawnCharacter(source, characterId));
 
+function ensureSyncNui(reason) {
+  setTimeout(() => {
+    try {
+      const state = GetResourceState('sync_nui');
+      if (state === 'started' || state === 'starting') return;
+      console.log(`[sync_spawn] sync_nui state=${state} → ensure (${reason})`);
+      ExecuteCommand('ensure sync_nui');
+    } catch (err) {
+      console.error('[sync_spawn] ensure sync_nui failed:', err && err.message ? err.message : err);
+    }
+  }, 900);
+}
+
+on('onResourceStart', (res) => {
+  if (res === GetCurrentResourceName()) {
+    ensureSyncNui('spawn-start');
+  }
+});
+
 console.log('[sync_spawn] loaded');

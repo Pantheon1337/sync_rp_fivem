@@ -435,6 +435,26 @@ setInterval(() => {
   }
 }, POSITION_FLUSH_MS);
 
+/** Hotreload often leaves sync_nui stopped after characters restart — bring it back. */
+function ensureSyncNui(reason) {
+  setTimeout(() => {
+    try {
+      const state = GetResourceState('sync_nui');
+      if (state === 'started' || state === 'starting') {
+        console.log(`[sync_characters] sync_nui already ${state} (${reason})`);
+        return;
+      }
+      console.log(`[sync_characters] sync_nui state=${state} → ensure (${reason})`);
+      ExecuteCommand('ensure sync_nui');
+    } catch (err) {
+      console.error(
+        '[sync_characters] ensure sync_nui failed:',
+        err && err.message ? err.message : err,
+      );
+    }
+  }, 800);
+}
+
 on('onResourceStart', (res) => {
   if (res === GetCurrentResourceName()) {
     try {
@@ -442,6 +462,7 @@ on('onResourceStart', (res) => {
       repo = createCharactersRepo(db(), { maxSlots: maxSlots() });
       lastPos.clear();
       console.log(`[sync_characters] loaded (slots=${maxSlots()}) create=hardened`);
+      ensureSyncNui('characters-start');
     } catch (err) {
       console.error(
         '[sync_characters] reload failed:',
