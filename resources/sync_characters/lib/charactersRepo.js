@@ -133,6 +133,57 @@ function createCharactersRepo(db, options = {}) {
     }
   }
 
+  async function listDeletedSlots(accountId) {
+    const rows = await db.query(
+      `SELECT id, slot FROM characters
+       WHERE account_id = ? AND deleted_at IS NOT NULL
+       ORDER BY slot ASC, id ASC`,
+      [accountId],
+    );
+    return (rows || []).map((r) => ({ id: Number(r.id), slot: Number(r.slot) }));
+  }
+
+  async function listAllSlots(accountId) {
+    const rows = await db.query(`SELECT slot FROM characters WHERE account_id = ?`, [accountId]);
+    return (rows || []).map((r) => Number(r.slot));
+  }
+
+  /**
+   * Soft-delete keeps (account_id, slot) unique — INSERT into a "free" active slot
+   * fails with uq_characters_account_slot if a deleted row still owns that slot.
+   * Revive the soft-deleted row instead of inserting a duplicate key.
+   */
+  async function reviveDeletedRow(rowId, fields) {
+    const {
+      uuid,
+      firstName,
+      lastName,
+      dateOfBirth,
+      gender,
+      model,
+    } = fields;
+    await db.query(
+      `UPDATE characters SET
+         uuid = ?,
+         first_name = ?,
+         last_name = ?,
+         date_of_birth = ?,
+         gender = ?,
+         model = ?,
+         appearance_json = NULL,
+         position_x = NULL,
+         position_y = NULL,
+         position_z = NULL,
+         position_h = NULL,
+         cash = 0,
+         bank = 0,
+         deleted_at = NULL
+       WHERE id = ?`,
+      [uuid, firstName, lastName, dateOfBirth, gender, model, rowId],
+    );
+    return rowId;
+  }
+
   async function create(accountId, input) {
     const body = input && typeof input === 'object' ? input : {};
     const firstName = normalizeName(body.firstName);
@@ -147,38 +198,83 @@ function createCharactersRepo(db, options = {}) {
     const model = gender === 'female' ? FEMALE_MODEL : MALE_MODEL;
 
     const existing = await listByAccount(accountId);
-    const slot = nextFreeSlot(
-      existing.map((c) => c.slot),
-      maxSlots,
-    );
-    if (slot == null) {
+    if (existing.length >= maxSlots) {
       throw new Error(`sync_characters: нет свободных слотов (макс. ${maxSlots})`);
     }
 
+    const occupiedSlots = await listAllSlots(accountId);
+    let slot = nextFreeSlot(occupiedSlots, maxSlots);
     const uuid = randomUUID();
-    const params = [uuid, accountId, slot, firstName, lastName, dateOfBirth, gender, model];
-    // Single query (not transaction) — fewer FiveM export serialization edge cases.
-    // height_cm optional: INSERT without it, then best-effort UPDATE (pre-005 height DBs).
-    const insertId = await insertCharacterRow(params);
-    if (!Number.isFinite(insertId) || insertId <= 0) {
+    let characterId = null;
+
+    if (slot != null) {
+      const params = [uuid, accountId, slot, firstName, lastName, dateOfBirth, gender, model];
+      try {
+        characterId = await insertCharacterRow(params);
+      } catch (err) {
+        const msg = String((err && (err.sqlMessage || err.message)) || err || '');
+        // Race / leftover soft-delete: fall through to revive path
+        if (!/uq_characters_account_slot|Duplicate entry/i.test(msg)) throw err;
+        slot = null;
+      }
+    }
+
+    if (characterId == null) {
+      const deleted = await listDeletedSlots(accountId);
+      if (!deleted.length) {
+        throw new Error(
+          `sync_characters: нет свободных слотов (макс. ${maxSlots}); удалите персонажа или увеличьте sync_character_slots`,
+        );
+      }
+      const reuse = deleted[0];
+      slot = reuse.slot;
+      try {
+        characterId = await reviveDeletedRow(reuse.id, {
+          uuid,
+          firstName,
+          lastName,
+          dateOfBirth,
+          gender,
+          model,
+        });
+      } catch (err) {
+        const msg = String((err && (err.sqlMessage || err.message)) || err || '');
+        // appearance_json column may be missing on old schemas
+        if (/appearance_json|Unknown column/i.test(msg)) {
+          await db.query(
+            `UPDATE characters SET
+               uuid = ?, first_name = ?, last_name = ?, date_of_birth = ?, gender = ?, model = ?,
+               position_x = NULL, position_y = NULL, position_z = NULL, position_h = NULL,
+               cash = 0, bank = 0, deleted_at = NULL
+             WHERE id = ?`,
+            [uuid, firstName, lastName, dateOfBirth, gender, model, reuse.id],
+          );
+          characterId = reuse.id;
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    if (!Number.isFinite(characterId) || characterId <= 0) {
       throw new Error(
-        'sync_characters: INSERT не вернул id — проверьте sync_db и npm run migrate',
+        'sync_characters: create не вернул id — проверьте sync_db и npm run migrate',
       );
     }
     if (heightCm != null) {
       try {
         await db.query(`UPDATE characters SET height_cm = ? WHERE id = ? AND deleted_at IS NULL`, [
           heightCm,
-          insertId,
+          characterId,
         ]);
       } catch {
         // Column missing until migration 005_character_height — character still created.
       }
     }
-    const created = await get(insertId);
+    const created = await get(characterId);
     if (!created) {
       throw new Error(
-        `sync_characters: строка id=${insertId} создана, но SELECT не вернул персонажа`,
+        `sync_characters: строка id=${characterId} создана, но SELECT не вернул персонажа`,
       );
     }
     return created;
