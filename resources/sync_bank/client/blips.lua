@@ -1,12 +1,16 @@
--- Map blips for banks/ATMs.
--- Same approach as ESX_Banking + qb-banking:
---   1) CLIENT-ONLY natives (AddBlipForCoord) — server cannot draw map icons
---   2) Lua coord table (config/blips.lua), not JSON
---   3) CreateThread at start + recreate after character select / spawn
--- Legend: all ATMs share SetBlipCategory + identical name → one pause-map entry.
--- Sprite: SyncBankBlips.sprite (default 605 radar_nhp_starterpack)
+-- Map blips for banks/ATMs (client-only AddBlipForCoord).
+-- Legend (pause map):
+--   ALL banks → one entry (shared GXT name + SetBlipCategory bank)
+--   ALL ATMs  → one entry (shared GXT name + SetBlipCategory atm)
+-- Do NOT merge banks into the ATM category.
+-- Sprite 605 = radar_nhp_starterpack.
 
 local active = {}
+
+local BANK_NAME_KEY = 'SYNCRP_BLIP_BANK'
+local ATM_NAME_KEY = 'SYNCRP_BLIP_ATM'
+local BANK_CAT_DEFAULT = 12
+local ATM_CAT_DEFAULT = 13
 
 local function clearBlips()
   for i = 1, #active do
@@ -18,35 +22,69 @@ local function clearBlips()
   active = {}
 end
 
-local function registerLegendCategories()
+local function registerLegendLabels()
   local cfg = SyncBankBlips
   if not cfg then return end
-  local bankCat = tonumber(cfg.bankCategory)
-  local atmCat = tonumber(cfg.atmCategory)
-  if bankCat and bankCat >= 12 and bankCat <= 133 then
-    AddTextEntry('BLIP_CAT_' .. tostring(bankCat), cfg.bankCategoryLabel or 'Банки')
+
+  local bankName = cfg.bankBlipName or 'Банк'
+  local atmName = cfg.atmBlipName or 'Банкомат'
+  local bankCatLabel = cfg.bankCategoryLabel or 'Банки'
+  local atmCatLabel = cfg.atmCategoryLabel or 'Банкоматы'
+
+  -- Shared GXT keys — identical hash on every blip of that type (no STRING outliers).
+  AddTextEntry(BANK_NAME_KEY, bankName)
+  AddTextEntry(ATM_NAME_KEY, atmName)
+
+  local bankCat = tonumber(cfg.bankCategory) or BANK_CAT_DEFAULT
+  local atmCat = tonumber(cfg.atmCategory) or ATM_CAT_DEFAULT
+  if bankCat >= 12 and bankCat <= 133 then
+    AddTextEntry('BLIP_CAT_' .. tostring(bankCat), bankCatLabel)
   end
-  if atmCat and atmCat >= 12 and atmCat <= 133 then
-    AddTextEntry('BLIP_CAT_' .. tostring(atmCat), cfg.atmCategoryLabel or 'Банкоматы')
+  if atmCat >= 12 and atmCat <= 133 then
+    AddTextEntry('BLIP_CAT_' .. tostring(atmCat), atmCatLabel)
   end
 end
 
-local function addOne(x, y, z, name, scale, shortRange, category)
-  local cfg = SyncBankBlips
-  local blip = AddBlipForCoord(x + 0.0, y + 0.0, z + 0.0)
-  SetBlipSprite(blip, tonumber(cfg.sprite) or 605)
-  SetBlipColour(blip, tonumber(cfg.colour) or 2)
-  SetBlipScale(blip, scale or 0.85)
-  SetBlipAsShortRange(blip, shortRange and true or false)
-  SetBlipDisplay(blip, 2)
-  if category and category >= 12 then
-    SetBlipCategory(blip, category)
-  end
-  BeginTextCommandSetBlipName('STRING')
-  AddTextComponentString(name or 'Банк')
-  EndTextCommandSetBlipName(blip)
+local function track(blip)
   active[#active + 1] = blip
   return blip
+end
+
+local function styleBlip(blip, scale, shortRange)
+  local cfg = SyncBankBlips
+  SetBlipSprite(blip, tonumber(cfg.sprite) or 605)
+  SetBlipDisplay(blip, 2)
+  SetBlipScale(blip, scale)
+  SetBlipColour(blip, tonumber(cfg.colour) or 2)
+  SetBlipAsShortRange(blip, shortRange and true or false)
+end
+
+--- Every bank: same GXT name + same bank category → one legend row.
+local function addBankBlip(item)
+  local cfg = SyncBankBlips
+  local cat = tonumber(cfg.bankCategory) or BANK_CAT_DEFAULT
+  local blip = AddBlipForCoord(item.x + 0.0, item.y + 0.0, item.z + 0.0)
+  styleBlip(blip, cfg.scaleBank or 0.9, cfg.shortRangeBanks == true)
+  SetBlipCategory(blip, cat)
+  BeginTextCommandSetBlipName(BANK_NAME_KEY)
+  EndTextCommandSetBlipName(blip)
+  return track(blip)
+end
+
+--- Every ATM: same GXT name + same ATM category → one legend row.
+local function addAtmBlip(item)
+  local cfg = SyncBankBlips
+  local cat = tonumber(cfg.atmCategory) or ATM_CAT_DEFAULT
+  local blip = AddBlipForCoord(item.x + 0.0, item.y + 0.0, item.z + 0.0)
+  styleBlip(blip, cfg.scaleAtm or 0.7, cfg.shortRangeAtms ~= false)
+  SetBlipCategory(blip, cat)
+  BeginTextCommandSetBlipName(ATM_NAME_KEY)
+  EndTextCommandSetBlipName(blip)
+  return track(blip)
+end
+
+local function coordKey(x, y, z)
+  return ('%.2f:%.2f:%.2f'):format(x + 0.0, y + 0.0, z + 0.0)
 end
 
 local function createBlips()
@@ -57,54 +95,53 @@ local function createBlips()
     return 0
   end
 
-  registerLegendCategories()
+  registerLegendLabels()
 
   local sprite = tonumber(cfg.sprite) or 605
-  local bankCat = tonumber(cfg.bankCategory) or 12
-  local atmCat = tonumber(cfg.atmCategory) or 13
-  local atmName = cfg.atmBlipName or 'Банкомат'
-  local banks = 0
-  local atms = 0
+  local bankCat = tonumber(cfg.bankCategory) or BANK_CAT_DEFAULT
+  local atmCat = tonumber(cfg.atmCategory) or ATM_CAT_DEFAULT
+  local banks, atms, skipBank, skipAtm = 0, 0, 0, 0
+  local seenBank, seenAtm = {}, {}
 
   if cfg.showBanks ~= false then
-    for _, item in pairs(cfg.banks or {}) do
-      -- Distinct branch names stay selectable; category groups them under "Банки".
-      addOne(
-        item.x,
-        item.y,
-        item.z,
-        item.name or 'Банк',
-        cfg.scaleBank or 0.9,
-        cfg.shortRangeBanks == true,
-        bankCat
-      )
-      banks = banks + 1
+    for _, item in ipairs(cfg.banks or {}) do
+      local key = coordKey(item.x, item.y, item.z)
+      if seenBank[key] then
+        skipBank = skipBank + 1
+      else
+        seenBank[key] = true
+        addBankBlip(item)
+        banks = banks + 1
+      end
     end
   end
 
   if cfg.showAtms ~= false then
-    for _, item in pairs(cfg.atms or {}) do
-      -- Same name + same category → one legend line for all ATMs.
-      addOne(
-        item.x,
-        item.y,
-        item.z,
-        atmName,
-        cfg.scaleAtm or 0.7,
-        cfg.shortRangeAtms ~= false,
-        atmCat
-      )
-      atms = atms + 1
+    for _, item in ipairs(cfg.atms or {}) do
+      local key = coordKey(item.x, item.y, item.z)
+      if seenAtm[key] then
+        skipAtm = skipAtm + 1
+      else
+        seenAtm[key] = true
+        addAtmBlip(item)
+        atms = atms + 1
+      end
     end
   end
 
-  print(('[sync_bank] map blips ready sprite=%s total=%s banks=%s atms=%s atmCat=%s'):format(
+  print(('[sync_bank] blips sprite=%s banks=%s@cat%s atms=%s@cat%s (legend: 1 bank + 1 atm)'):format(
     tostring(sprite),
-    tostring(#active),
     tostring(banks),
+    tostring(bankCat),
     tostring(atms),
     tostring(atmCat)
   ))
+  if skipBank > 0 or skipAtm > 0 then
+    print(('[sync_bank] blip dedupe skipped banks=%s atms=%s'):format(
+      tostring(skipBank),
+      tostring(skipAtm)
+    ))
+  end
   return #active
 end
 
@@ -124,10 +161,7 @@ RegisterCommand('bankblips', function()
   local n = createBlips()
   BeginTextCommandThefeedPost('STRING')
   AddTextComponentSubstringPlayerName(
-    ('SyncRP: блипов на карте %s (sprite %s)'):format(
-      tostring(n),
-      tostring((SyncBankBlips and SyncBankBlips.sprite) or 605)
-    )
+    ('SyncRP: блипов %s — legend: Банк + Банкомат'):format(tostring(n))
   )
   EndTextCommandThefeedPostTicker(false, true)
 end, false)
@@ -137,4 +171,4 @@ AddEventHandler('onResourceStop', function(res)
   clearBlips()
 end)
 
-print('[sync_bank] blips client loaded (legend categories + sprite 605)')
+print('[sync_bank] blips: one bank legend + one ATM legend (sprite 605)')

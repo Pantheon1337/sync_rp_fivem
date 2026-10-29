@@ -20,11 +20,13 @@ SyncBankBlips = {
   shortRangeAtms = true,
 
   -- Custom named categories (docs.fivem.net SetBlipCategory): 12–133 → BLIP_CAT_<n>
-  bankCategory = 12, -- optional group heading "Банки" (branches still have own names)
-  atmCategory = 13, -- all ATMs under one legend heading
+  -- Banks and ATMs stay SEPARATE categories; each type = one pause-map legend row.
+  bankCategory = 12,
+  atmCategory = 13,
   bankCategoryLabel = 'Банки',
   atmCategoryLabel = 'Банкоматы',
-  -- Identical name on every ATM so legend collapses even without category support.
+  -- Shared GXT display names (SYNCRP_BLIP_BANK / SYNCRP_BLIP_ATM) — never per-location STRING.
+  bankBlipName = 'Банк',
   atmBlipName = 'Банкомат',
 
   banks = {
