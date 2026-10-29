@@ -16,7 +16,7 @@ SyncRP: свой NUI (dark glass), свой ledger (`sync_economy`). Чужие 
 | | |
 |--|--|
 | Конфиг | `resources/sync_bank/config/locations.json` — 8 отделений + ключевые ATM |
-| Client | E у точки; model-scan ATM; blip на банки; F6 только рядом (или `setr sync_bank_allow_remote 1`) |
+| Client | E у точки; model-scan ATM; blip **605** банки+ATM; F6 только рядом (или `setr sync_bank_allow_remote 1`) |
 | Server | `validateAccess` по радиусу + claim coords для model ATM |
 | UI | тот же банк; подзаголовок локации; ATM → заголовок «Банкомат» |
 
@@ -28,15 +28,23 @@ SyncRP: свой NUI (dark glass), свой ledger (`sync_economy`). Чужие 
 
 | | |
 |--|--|
-| Sprite | **605** — `radar_nhp_starterpack` |
+| Sprite | **605** — `radar_nhp_starterpack` (золотой $) |
 | Docs | https://docs.fivem.net/docs/game-references/blips/ |
-| Config | `locations.json` → `blip.sprite` / `showBanks` / `showAtms` |
+| Config | `locations.json` → `blip.*` |
+| Banks | `shortRangeBanks: false` — всегда на миникарте |
+| ATMs | `shortRangeAtms: true` — на миникарте только рядом; на пауза-карте всегда |
 
-Не забывать: любые новые отделения/ATM в конфиге автоматически получают этот blip.
+После `deploy-po` **обязательно** в Live Console:
 
-## PO smoke
+```
+exec syncrp-hotreload.cfg
+```
 
-1. На карте blip **605** у банков и ATM (Fleeca Legion Square рядом со спавном).
-2. Подойти → подсказка **E — Банк** → тот же UI.
-3. Любой стримящийся ATM prop → **E — Банкомат**.
-4. Вдали от точек F6 не открывает (без remote convar).
+или `restart sync_bank`. Без restart клиент держит старый Lua — блипов не будет.
+
+Проверка:
+
+1. F8: строка `[sync_bank] blips sprite=605 created=30 ...` (8 банков + ATM).
+2. Пауза-карта (P / ESC → карта) → Legion Square / Fleeca — иконка **605**.
+3. Если карта пустая: в чат `/bankblips` — пересоздаёт и пишет число в feed.
+4. `ensure sync_bank` один раз в `server.cfg` (после economy/hud).

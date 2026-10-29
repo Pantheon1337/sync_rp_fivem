@@ -191,15 +191,18 @@ RegisterNetEvent('sync:bank:transferResult', function(result)
 end)
 
 --- Blip 605 = radar_nhp_starterpack (docs.fivem.net/docs/game-references/blips/)
-local function addMapBlip(x, y, z, label, scale)
+--- Display 4 = main map (selectable). Short-range only hides from minimap until nearby.
+local function addMapBlip(x, y, z, label, scale, shortRange)
   local style = cfg.blip or {}
   local sprite = tonumber(style.sprite) or 605
   local colour = tonumber(style.colour) or 2
+  local display = tonumber(style.display) or 4
   local blip = AddBlipForCoord(x + 0.0, y + 0.0, z + 0.0)
   SetBlipSprite(blip, sprite)
-  SetBlipColour(blip, colour)
+  SetBlipDisplay(blip, display)
   SetBlipScale(blip, scale or 0.8)
-  SetBlipAsShortRange(blip, style.shortRange ~= false)
+  SetBlipColour(blip, colour)
+  SetBlipAsShortRange(blip, shortRange and true or false)
   BeginTextCommandSetBlipName('STRING')
   AddTextComponentSubstringPlayerName(label or 'Банк')
   EndTextCommandSetBlipName(blip)
@@ -212,14 +215,30 @@ local function setupBlips()
     if DoesBlipExist(b) then RemoveBlip(b) end
   end
   blips = {}
+  if not cfg then return 0 end
+
   local style = cfg.blip or {}
   local showBanks = style.showBanks ~= false
   local showAtms = style.showAtms ~= false
+  -- Banks: long-range on minimap by default (find Fleeca from afar).
+  -- ATMs: short-range so the radar is not a wall of icons.
+  local shortBanks = style.shortRangeBanks
+  if shortBanks == nil then shortBanks = false end
+  local shortAtms = style.shortRangeAtms
+  if shortAtms == nil then
+    if style.shortRange ~= nil then
+      shortAtms = style.shortRange and true or false
+    else
+      shortAtms = true
+    end
+  end
 
+  local bankCount, atmCount = 0, 0
   if showBanks then
     for _, bank in ipairs(cfg.banks or {}) do
       if bank.blip ~= false then
-        addMapBlip(bank.x, bank.y, bank.z, bank.label or 'Банк', style.scaleBank or 0.85)
+        addMapBlip(bank.x, bank.y, bank.z, bank.label or 'Банк', style.scaleBank or 0.9, shortBanks)
+        bankCount = bankCount + 1
       end
     end
   end
@@ -227,16 +246,21 @@ local function setupBlips()
   if showAtms then
     for _, atm in ipairs(cfg.atms or {}) do
       if atm.blip ~= false then
-        addMapBlip(atm.x, atm.y, atm.z, atm.label or 'Банкомат', style.scaleAtm or 0.65)
+        addMapBlip(atm.x, atm.y, atm.z, atm.label or 'Банкомат', style.scaleAtm or 0.7, shortAtms)
+        atmCount = atmCount + 1
       end
     end
   end
 
-  print(('[sync_bank] blips sprite=%s banks=%s atms=%s'):format(
-    tostring((style.sprite) or 605),
-    tostring(showBanks and #(cfg.banks or {}) or 0),
-    tostring(showAtms and #(cfg.atms or {}) or 0)
+  print(('[sync_bank] blips sprite=%s created=%s (banks=%s atms=%s) shortBanks=%s shortAtms=%s'):format(
+    tostring(style.sprite or 605),
+    tostring(#blips),
+    tostring(bankCount),
+    tostring(atmCount),
+    tostring(shortBanks),
+    tostring(shortAtms)
   ))
+  return #blips
 end
 
 local function drawPrompt(spot)
@@ -246,13 +270,39 @@ local function drawPrompt(spot)
   DisplayHelpTextFromStringLabel(0, 0, 1, -1)
 end
 
+RegisterCommand('bankblips', function()
+  local n = setupBlips()
+  BeginTextCommandThefeedPost('STRING')
+  AddTextComponentSubstringPlayerName(('SyncRP банк: блипов на карте %s (sprite 605)'):format(tostring(n or 0)))
+  EndTextCommandThefeedPostTicker(false, true)
+end, false)
+
 CreateThread(function()
+  while not NetworkIsSessionStarted() do
+    Wait(200)
+  end
+  -- Wait until local ped exists (map/radar ready)
+  local pedWait = 0
+  while pedWait < 100 do
+    local ped = PlayerPedId()
+    if ped and ped ~= 0 and DoesEntityExist(ped) then break end
+    pedWait = pedWait + 1
+    Wait(100)
+  end
+
   cfg = loadConfig()
-  setupBlips()
-  print(('[sync_bank] locations loaded banks=%s atms=%s'):format(
+  local n = setupBlips()
+  print(('[sync_bank] locations loaded banks=%s atms=%s blips=%s'):format(
     tostring(#(cfg.banks or {})),
-    tostring(#(cfg.atms or {}))
+    tostring(#(cfg.atms or {})),
+    tostring(n or 0)
   ))
+
+  -- Second pass after spawn/streaming (resource may start before pause-map is ready)
+  Wait(2500)
+  if cfg and #blips == 0 then
+    setupBlips()
+  end
 
   while true do
     local sleep = 750
